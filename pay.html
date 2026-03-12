@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduLearn - 支付页面</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="pay">
+  <header class="app-header center-title">
+    <div class="brand-wrap">
+      <a class="back-btn" href="subscribe.html" data-back-target="subscribe.html">返回</a>
+      <div class="brand-line">
+        <span class="logo-e">E</span>
+        <h1 class="brand">EduLearn</h1>
+      </div>
+      <p class="page-title">支付页面</p>
+    </div>
+    <div class="header-user">
+      <img id="headerAvatar" class="avatar" alt="avatar" />
+      <span id="headerName">加载中...</span>
+      <button id="logoutBtn" class="btn ghost">退出登录</button>
+    </div>
+  </header>
+
+  <main class="container with-nav narrow">
+    <section class="card center pay-card">
+      <img class="qr" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='260'><rect width='100%25' height='100%25' fill='%23e2e8f0'/><text x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%23475569' font-size='28'>PAY QR</text></svg>" alt="支付二维码占位图" />
+      <p id="payStatus" class="muted">请扫码支付后点击下方按钮。</p>
+      <button id="paidBtn" class="btn primary">我已付款</button>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="index.html">首页</a>
+    <a class="active" href="subscribe.html">订阅</a>
+    <a href="profile.html">我的</a>
+  </nav>
+
+  <script src="script.js"></script>
+</body>
+</html>

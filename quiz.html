@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduLearn - 习题练习</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="quiz">
+  <header class="app-header">
+    <div class="brand-wrap">
+      <a class="back-btn" href="index.html" data-back-target="index.html">返回</a>
+      <div class="brand-line">
+        <span class="logo-e">E</span>
+        <h1 class="brand">EduLearn</h1>
+      </div>
+      <p class="page-title">习题练习</p>
+    </div>
+    <div class="header-user">
+      <img id="headerAvatar" class="avatar" alt="avatar" />
+      <span id="headerName">加载中...</span>
+      <button id="logoutBtn" class="btn ghost">退出登录</button>
+    </div>
+  </header>
+
+  <main class="container with-nav">
+    <section class="card">
+      <h2>章节练习</h2>
+      <div class="quiz-top">
+        <select id="quizChapterSelect"></select>
+        <button id="startWrongBookBtn" class="btn ghost">错题集练习</button>
+      </div>
+      <div id="quizBox" class="quiz-box"></div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <a class="active" href="index.html">首页</a>
+    <a href="subscribe.html">订阅</a>
+    <a href="profile.html">我的</a>
+  </nav>
+
+  <script src="script.js"></script>
+</body>
+</html>

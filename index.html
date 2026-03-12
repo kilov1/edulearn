@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduLearn - 首页</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="home">
+  <header class="app-header home-header">
+    <div class="brand-wrap">
+      <div class="brand-line">
+        <span class="logo-e">E</span>
+        <h1 class="brand">EduLearn</h1>
+      </div>
+      <p>电路与电子教育学习平台 · 视频教学 · 仿真实验 · 习题练习</p>
+    </div>
+    <div class="header-user">
+      <img id="headerAvatar" class="avatar large" alt="avatar" />
+      <span id="headerName">加载中...</span>
+      <button id="logoutBtn" class="btn ghost lg">退出登录</button>
+    </div>
+  </header>
+
+  <main class="container with-nav home-main">
+    <section class="feature-grid">
+      <a class="feature-card" href="videos.html">
+        <h2><span class="feature-icon">📺</span> 教学视频</h2>
+        <p>按章节观看教学内容，支持直达课后习题。</p>
+      </a>
+      <a class="feature-card" href="simulator.html">
+        <h2><span class="feature-icon">🔬</span> 电路仿真实验</h2>
+        <p>拖拽元件、鼠标连线，实时观察 LED 亮灭变化。</p>
+      </a>
+      <a class="feature-card" href="books.html">
+        <h2><span class="feature-icon">📖</span> 电子书本</h2>
+        <p>按目录阅读教材，展开查看重点知识。</p>
+      </a>
+      <a class="feature-card" href="quiz.html">
+        <h2><span class="feature-icon">✏️</span> 习题练习</h2>
+        <p>选择答案后查看解析，点击下一题继续，错题集反复练。</p>
+      </a>
+    </section>
+
+    <section class="card progress-center">
+      <h2>学习进度</h2>
+      <div id="progressBox"></div>
+    </section>
+
+    <div class="home-footer">
+      <a href="about.html" class="btn ghost">关于我们</a>
+    </div>
+  </main>
+
+  <nav class="bottom-nav">
+    <a class="active" href="index.html">首页</a>
+    <a href="subscribe.html">订阅</a>
+    <a href="profile.html">我的</a>
+  </nav>
+
+  <script src="script.js"></script>
+</body>
+</html>

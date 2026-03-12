@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduLearn - 教学视频</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="videos">
+  <header class="app-header">
+    <div class="brand-wrap">
+      <a class="back-btn" href="index.html" data-back-target="index.html">返回</a>
+      <div class="brand-line">
+        <span class="logo-e">E</span>
+        <h1 class="brand">EduLearn</h1>
+      </div>
+      <p class="page-title">教学视频</p>
+    </div>
+    <div class="header-user">
+      <img id="headerAvatar" class="avatar" alt="avatar" />
+      <span id="headerName">加载中...</span>
+      <button id="logoutBtn" class="btn ghost">退出登录</button>
+    </div>
+  </header>
+
+  <main class="container with-nav videos-main">
+    <!-- 视频列表区域 -->
+    <section id="videosListSection" class="videos-list-section">
+      <h2>按章节选择视频</h2>
+      <div id="videosListRoot" class="videos-list-wrap"></div>
+    </section>
+
+    <!-- 播放器区域（初始隐藏） -->
+    <section id="videosPlayerSection" class="videos-player-section hidden">
+      <div id="videosPlayerFullscreenWrap" class="videos-player-fullscreen-wrap">
+        <div class="videos-player-row">
+          <div id="biliPlayerWrap" class="bili-player-wrap">
+            <iframe id="biliPlayerIframe" class="bili-player" src="about:blank" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
+          </div>
+          <div class="videos-player-side">
+            <button id="videosBackBtn" class="btn primary videos-action-btn">返回视频列表</button>
+            <button id="videosFullscreenBtn" class="btn ghost videos-action-btn">全屏</button>
+            <p class="videos-fullscreen-hint">进入全屏之后可点击b站中的网页全屏按键</p>
+          </div>
+        </div>
+        <p id="videosPlayerTitle" class="videos-player-title"></p>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <a class="active" href="index.html">首页</a>
+    <a href="subscribe.html">订阅</a>
+    <a href="profile.html">我的</a>
+  </nav>
+
+  <script src="script.js"></script>
+  <script>
+    (function() {
+      const wrap = document.getElementById("videosPlayerFullscreenWrap");
+      const fullscreenBtn = document.getElementById("videosFullscreenBtn");
+      if (!wrap || !fullscreenBtn) return;
+      fullscreenBtn.addEventListener("click", function() {
+        if (!document.fullscreenElement) {
+          wrap.requestFullscreen().then(function() {
+            fullscreenBtn.textContent = "退出全屏";
+          }).catch(function() {
+            fullscreenBtn.textContent = "全屏";
+          });
+        } else {
+          document.exitFullscreen().then(function() {
+            fullscreenBtn.textContent = "全屏";
+          });
+        }
+      });
+      document.addEventListener("fullscreenchange", function() {
+        if (!document.fullscreenElement) fullscreenBtn.textContent = "全屏";
+      });
+    })();
+  </script>
+</body>
+</html>

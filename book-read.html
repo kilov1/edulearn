@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduLearn - 阅读</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="book-read">
+  <header class="app-header">
+    <div class="brand-wrap">
+      <a class="back-btn" href="books.html" data-back-target="books.html">返回</a>
+      <div class="brand-line">
+        <span class="logo-e">E</span>
+        <h1 class="brand">EduLearn</h1>
+      </div>
+      <p class="page-title" id="bookReadTitle">阅读</p>
+    </div>
+    <div class="header-user">
+      <img id="headerAvatar" class="avatar" alt="avatar" />
+      <span id="headerName">加载中...</span>
+      <button id="logoutBtn" class="btn ghost">退出登录</button>
+    </div>
+  </header>
+
+  <main class="container with-nav narrow">
+    <section class="card">
+      <article id="bookReadContent" class="resource-article"></article>
+      <a href="books.html" class="btn primary" style="margin-top:20px;display:inline-block">返回目录</a>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <a class="active" href="index.html">首页</a>
+    <a href="subscribe.html">订阅</a>
+    <a href="profile.html">我的</a>
+  </nav>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduLearn - 知识资源</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="premium-resource">
+  <header class="app-header">
+    <div class="brand-wrap">
+      <a class="back-btn" href="premium-resources.html" data-back-target="premium-resources.html">返回</a>
+      <div class="brand-line">
+        <span class="logo-e">E</span>
+        <h1 class="brand">EduLearn</h1>
+      </div>
+      <p class="page-title" id="resourceTitle">知识资源</p>
+    </div>
+    <div class="header-user">
+      <img id="headerAvatar" class="avatar" alt="avatar" />
+      <span id="headerName">加载中...</span>
+      <button id="logoutBtn" class="btn ghost">退出登录</button>
+    </div>
+  </header>
+
+  <main class="container with-nav narrow">
+    <section class="card">
+      <article id="premiumResourceContent" class="resource-article"></article>
+      <div class="pager">
+        <button id="premiumPrevPageBtn" class="btn ghost">上一页</button>
+        <span id="premiumPageLabel" class="muted"></span>
+        <button id="premiumNextPageBtn" class="btn ghost">下一页</button>
+      </div>
+      <a href="premium-resources.html" class="btn primary" style="margin-top:20px;display:inline-block">返回列表</a>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="index.html">首页</a>
+    <a class="active" href="subscribe.html">订阅</a>
+    <a href="profile.html">我的</a>
+  </nav>
+
+  <script src="script.js"></script>
+</body>
+</html>

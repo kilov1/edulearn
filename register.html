@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduLearn - 注册</title>
+  <link rel="stylesheet" href="auth.css" />
+</head>
+<body>
+  <div class="card">
+    <div class="auth-brand-line">
+      <span class="logo-e">E</span>
+      <h1 class="auth-brand">EduLearn</h1>
+    </div>
+    <h2>创建账号</h2>
+    <p>注册后即可开始使用所有学习模块。</p>
+
+    <form id="registerForm">
+      <label for="username">用户名</label>
+      <input id="username" name="username" type="text" minlength="3" maxlength="32" required />
+      <div id="usernameCheck" class="hint">请输入 3~32 位用户名</div>
+
+      <label for="password">密码</label>
+      <input id="password" name="password" type="password" minlength="8" maxlength="16" required />
+      <div class="strength-wrap">
+        <div id="strengthBar" class="strength-bar"></div>
+      </div>
+      <div id="strengthText" class="hint">密码需 8~16 位，包含字母和数字</div>
+
+      <label for="confirmPassword">重复密码</label>
+      <input id="confirmPassword" name="confirmPassword" type="password" minlength="8" maxlength="16" required />
+      <div id="confirmCheck" class="hint"></div>
+
+      <label>选择头像</label>
+      <div id="avatarOptions" class="avatar-grid"></div>
+      <input id="avatarValue" name="avatarValue" type="hidden" value="#4f46e5" />
+
+      <button type="submit">注册</button>
+    </form>
+
+    <div id="message" class="msg"></div>
+    <div class="links">已有账号？<a href="login.html">去登录</a></div>
+  </div>
+
+  <script src="auth.js"></script>
+</body>
+</html>

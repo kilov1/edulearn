@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduLearn - 电路仿真实验</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="simulator">
+  <header class="app-header">
+    <div class="brand-wrap">
+      <a class="back-btn" href="index.html" data-back-target="index.html">返回</a>
+      <div class="brand-line">
+        <span class="logo-e">E</span>
+        <h1 class="brand">EduLearn</h1>
+      </div>
+      <p class="page-title">电路仿真实验</p>
+    </div>
+    <div class="header-user">
+      <img id="headerAvatar" class="avatar" alt="avatar" />
+      <span id="headerName">加载中...</span>
+      <button id="logoutBtn" class="btn ghost">退出登录</button>
+    </div>
+  </header>
+
+  <main class="sim-layout with-nav">
+    <section class="sim-panel">
+      <button id="tutorialBtn" class="btn primary block tutorial-btn">教学引导</button>
+      <h3>元件</h3>
+      <button id="addSourceBtn" class="btn block">添加电源</button>
+      <button id="addSwitchBtn" class="btn block">添加开关</button>
+      <button id="addResistorBtn" class="btn block">添加电阻</button>
+      <button id="addLedBtn" class="btn block">添加 LED</button>
+      <h3>操作</h3>
+      <button id="clearWiresBtn" class="btn block ghost">清空连线</button>
+      <button id="clearAllBtn" class="btn block danger">清空全部</button>
+      <button id="deleteSelectedBtn" class="btn block ghost">删除选中</button>
+    </section>
+
+    <section class="sim-canvas-wrap">
+      <canvas id="circuitCanvas" width="980" height="620"></canvas>
+      <p id="statusText" class="muted">状态：未检测到完整回路</p>
+    </section>
+
+    <section class="sim-panel">
+      <h3>选中元件</h3>
+      <div id="selectedInfo" class="muted">未选中</div>
+      <div id="resistorControls" class="hidden">
+        <label for="resistanceInput">电阻值 (Ω)</label>
+        <input id="resistanceInput" type="number" min="1" max="10000" step="10" value="220" />
+      </div>
+      <div id="switchControls" class="hidden">
+        <button id="toggleSwitchBtn" class="btn block toggle-switch-btn">切换开关</button>
+      </div>
+      <p class="muted">操作提示：点击端点开始连线，再点击另一端点完成连线。</p>
+    </section>
+  </main>
+
+  <div id="tutorialOverlay" class="tutorial-overlay hidden">
+    <div class="tutorial-modal">
+      <button id="tutorialSkip" class="tutorial-skip">跳过</button>
+      <h2 id="tutorialTitle"></h2>
+      <div id="tutorialContent" class="tutorial-content"></div>
+      <div class="tutorial-actions">
+        <button id="tutorialPrev" class="btn ghost">上一步</button>
+        <button id="tutorialNext" class="btn primary">下一步</button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a class="active" href="index.html">首页</a>
+    <a href="subscribe.html">订阅</a>
+    <a href="profile.html">我的</a>
+  </nav>
+
+  <script src="script.js"></script>
+  <script src="simulator.js"></script>
+</body>
+</html>

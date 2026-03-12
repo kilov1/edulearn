@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduLearn - 教学视频</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="video">
+  <header class="app-header">
+    <div class="brand-wrap">
+      <a class="back-btn" href="index.html" data-back-target="index.html">返回</a>
+      <div class="brand-line">
+        <span class="logo-e">E</span>
+        <h1 class="brand">EduLearn</h1>
+      </div>
+      <p class="page-title">教学视频</p>
+    </div>
+    <div class="header-user">
+      <img id="headerAvatar" class="avatar" alt="avatar" />
+      <span id="headerName">加载中...</span>
+      <button id="logoutBtn" class="btn ghost">退出登录</button>
+    </div>
+  </header>
+
+  <main class="container with-nav">
+    <section class="card">
+      <h2>教学视频</h2>
+      <div id="videoPageList" class="list-wrap"></div>
+    </section>
+  </main>
+
+  <div id="videoModal" class="video-modal hidden">
+    <div class="video-modal-inner">
+      <button id="videoModalClose" class="video-modal-close">×</button>
+      <h3 id="videoModalTitle"></h3>
+      <p id="videoModalMeta" class="muted"></p>
+      <div id="videoModalPlayer" class="video-player-placeholder">
+        <span>视频播放区域</span>
+      </div>
+    </div>
+  </div>
+
+  <nav class="bottom-nav">
+    <a class="active" href="index.html">首页</a>
+    <a href="subscribe.html">订阅</a>
+    <a href="profile.html">我的</a>
+  </nav>
+
+  <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduLearn - 订阅中心</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="subscribe">
+  <header class="app-header center-title">
+    <div class="brand-wrap">
+      <a class="back-btn" href="index.html" data-back-target="index.html">返回</a>
+      <div class="brand-line">
+        <span class="logo-e">E</span>
+        <h1 class="brand">EduLearn</h1>
+      </div>
+      <p class="page-title">订阅中心</p>
+    </div>
+    <div class="header-user">
+      <img id="headerAvatar" class="avatar" alt="avatar" />
+      <span id="headerName">加载中...</span>
+      <button id="logoutBtn" class="btn ghost">退出登录</button>
+    </div>
+  </header>
+
+  <main class="container with-nav subscribe-main">
+    <section id="subscribeUnpaid" class="card subscribe-card hidden">
+      <h2 class="subscribe-title">高级订阅服务</h2>
+      <div class="subscribe-features">
+        <div class="subscribe-feature">完整电子资料包</div>
+        <div class="subscribe-feature">3 套精品习题集（含错题集）</div>
+      </div>
+      <a class="btn primary subscribe-cta" href="pay.html">立即订阅</a>
+    </section>
+
+    <section id="subscribePaid" class="card subscribe-card hidden">
+      <h2 class="subscribe-title">订阅专属内容</h2>
+      <div class="subscribe-paid-grid">
+        <a class="subscribe-paid-item" href="premium-resources.html">
+          <span class="subscribe-paid-icon">📚</span>
+          <strong>知识资源</strong>
+          <span class="muted">课件与知识点</span>
+        </a>
+        <a class="subscribe-paid-item" href="premium-papers.html">
+          <span class="subscribe-paid-icon">📝</span>
+          <strong>精品习题</strong>
+          <span class="muted">3 套试卷 + 错题集</span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="index.html">首页</a>
+    <a class="active" href="subscribe.html">订阅</a>
+    <a href="profile.html">我的</a>
+  </nav>
+
+  <script src="script.js"></script>
+</body>
+</html>

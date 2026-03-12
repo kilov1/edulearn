@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduLearn - 个人中心</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-page="profile">
+  <header class="app-header center-title">
+    <div class="brand-wrap">
+      <a class="back-btn" href="index.html" data-back-target="index.html">返回</a>
+      <div class="brand-line">
+        <span class="logo-e">E</span>
+        <h1 class="brand">EduLearn</h1>
+      </div>
+      <p class="page-title">个人中心</p>
+    </div>
+    <div class="header-user">
+      <img id="headerAvatar" class="avatar large" alt="avatar" />
+      <span id="headerName">加载中...</span>
+      <button id="logoutBtn" class="btn ghost">退出登录</button>
+    </div>
+  </header>
+
+  <main class="container with-nav">
+    <section class="card">
+      <h2>1. 个人资料</h2>
+      <div id="profileView"></div>
+      <button id="editProfileBtn" class="btn ghost">修改资料</button>
+      <form id="profileForm" class="hidden">
+        <div class="grid-two">
+          <div>
+            <label>昵称</label>
+            <input name="nickname" maxlength="24" />
+          </div>
+          <div>
+            <label>姓名</label>
+            <input name="realName" maxlength="24" />
+          </div>
+          <div>
+            <label>学校</label>
+            <input name="school" maxlength="48" />
+          </div>
+          <div>
+            <label>生日</label>
+            <input name="birthday" type="date" />
+          </div>
+          <div>
+            <label>性别</label>
+            <select name="gender">
+              <option value="未填写">未填写</option>
+              <option value="男">男</option>
+              <option value="女">女</option>
+            </select>
+          </div>
+        </div>
+        <label>头像颜色</label>
+        <div id="profileAvatarOptions" class="avatar-inline"></div>
+        <input id="profileAvatarValue" name="avatarColor" type="hidden" value="#4f46e5" />
+        <button class="btn primary" type="submit">保存资料</button>
+      </form>
+      <div id="profileMsg" class="muted"></div>
+    </section>
+
+    <section class="card">
+      <h2>2. 账户安全</h2>
+      <p class="muted">密码修改已单独放入安全页面，操作更清晰。</p>
+      <a class="btn primary" href="password.html">进入修改密码页面</a>
+    </section>
+
+    <section class="card">
+      <h2>3. 学习数据统计</h2>
+      <div id="statsBox"></div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <a href="index.html">首页</a>
+    <a href="subscribe.html">订阅</a>
+    <a class="active" href="profile.html">我的</a>
+  </nav>
+
+  <script src="script.js"></script>
+</body>
+</html>
