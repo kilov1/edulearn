@@ -25,16 +25,16 @@
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   }
 
-  async function checkSessionAndRedirect() {
-    const sb = getSupabase();
-    if (!sb) return;
-    const { data: { session } } = await sb.auth.getSession();
-    if (session) {
-      window.location.href = "index.html";
-    }
-  }
-
-  checkSessionAndRedirect();
+  // 已禁用自动跳转
+  // async function checkSessionAndRedirect() {
+  //   const sb = getSupabase();
+  //   if (!sb) return;
+  //   const { data: { session } } = await sb.auth.getSession();
+  //   if (session) {
+  //     window.location.href = "index.html";
+  //   }
+  // }
+  // checkSessionAndRedirect();
 
   function validPassword(pwd) {
     return /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,16}$/.test(pwd);
@@ -188,9 +188,11 @@
 
         console.log("User info saved successfully");
 
+        // 已禁用自动跳转
         // 3. 成功后直接跳 index.html
         localStorage.setItem(CURRENT_KEY, username);
-        window.location.href = "index.html";
+        // window.location.href = "index.html";
+        showMessage("注册成功", true);
       } catch (err) {
         console.error("Registration error:", err);
         showMessage("注册失败，请重试", false);
@@ -240,10 +242,12 @@
       }
 
       localStorage.setItem(CURRENT_KEY, username);
-      showMessage("登录成功，正在跳转首页...", true);
-      setTimeout(() => {
-        window.location.href = "index.html";
-      }, 400);
+      // 已禁用自动跳转
+      // showMessage("登录成功，正在跳转首页...", true);
+      // setTimeout(() => {
+      //   window.location.href = "index.html";
+      // }, 400);
+      showMessage("登录成功", true);
     });
   }
 })();
