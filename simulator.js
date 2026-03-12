@@ -49,7 +49,59 @@
 
   function getMouse(e) {
     const rect = canvas.getBoundingClientRect();
-    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    let x, y;
+    if (e.touches && e.touches.length > 0) {
+      x = e.touches[0].clientX - rect.left;
+      y = e.touches[0].clientY - rect.top;
+    } else if (e.changedTouches && e.changedTouches.length > 0) {
+      x = e.changedTouches[0].clientX - rect.left;
+      y = e.changedTouches[0].clientY - rect.top;
+    } else {
+      x = e.clientX - rect.left;
+      y = e.clientY - rect.top;
+    }
+    return { x, y };
+  }
+
+  function handlePointerDown(e) {
+    mouse = getMouse(e);
+    const t = hitTerminal(mouse);
+    if (t) {
+      if (!wireStart) wireStart = t;
+      else {
+        addWire(wireStart, t);
+        wireStart = null;
+        rerender();
+      }
+      return;
+    }
+    const c = hitComp(mouse);
+    if (c) {
+      selectedId = c.id;
+      drag = { id: c.id, dx: mouse.x - c.x, dy: mouse.y - c.y };
+      rerender();
+      return;
+    }
+    selectedId = null;
+    wireStart = null;
+    rerender();
+  }
+
+  function handlePointerMove(e) {
+    mouse = getMouse(e);
+    if (!drag) {
+      draw();
+      return;
+    }
+    const c = comps.find((x) => x.id === drag.id);
+    if (!c) return;
+    c.x = mouse.x - drag.dx;
+    c.y = mouse.y - drag.dy;
+    rerender();
+  }
+
+  function handlePointerUp() {
+    drag = null;
   }
 
   function dist(a, b) {
@@ -425,44 +477,14 @@
     draw();
   }
 
-  canvas.addEventListener("mousedown", (e) => {
-    mouse = getMouse(e);
-    const t = hitTerminal(mouse);
-    if (t) {
-      if (!wireStart) wireStart = t;
-      else {
-        addWire(wireStart, t);
-        wireStart = null;
-        rerender();
-      }
-      return;
-    }
-    const c = hitComp(mouse);
-    if (c) {
-      selectedId = c.id;
-      drag = { id: c.id, dx: mouse.x - c.x, dy: mouse.y - c.y };
-      rerender();
-      return;
-    }
-    selectedId = null;
-    wireStart = null;
-    rerender();
-  });
-
-  canvas.addEventListener("mousemove", (e) => {
-    mouse = getMouse(e);
-    if (!drag) {
-      draw();
-      return;
-    }
-    const c = comps.find((x) => x.id === drag.id);
-    if (!c) return;
-    c.x = mouse.x - drag.dx;
-    c.y = mouse.y - drag.dy;
-    rerender();
-  });
-  canvas.addEventListener("mouseup", () => { drag = null; });
-  canvas.addEventListener("mouseleave", () => { drag = null; });
+  canvas.addEventListener("mousedown", handlePointerDown);
+  canvas.addEventListener("mousemove", handlePointerMove);
+  canvas.addEventListener("mouseup", handlePointerUp);
+  canvas.addEventListener("mouseleave", handlePointerUp);
+  canvas.addEventListener("touchstart", (e) => { e.preventDefault(); handlePointerDown(e); }, { passive: false });
+  canvas.addEventListener("touchmove", (e) => { e.preventDefault(); handlePointerMove(e); }, { passive: false });
+  canvas.addEventListener("touchend", (e) => { if (e.changedTouches.length) handlePointerUp(); }, { passive: true });
+  canvas.addEventListener("touchcancel", handlePointerUp);
   canvas.addEventListener("dblclick", (e) => {
     const c = hitComp(getMouse(e));
     if (c && c.type === TYPE.SWITCH) {

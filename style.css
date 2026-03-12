@@ -162,23 +162,24 @@ main.container > section + section {
 }
 
 .subscribe-feature {
-  padding: 18px 28px;
+  padding: 18px min(28px, 5vw);
   background: #f0f7ff;
   border-radius: 14px;
   color: #2b4f7f;
-  font-size: 17px;
+  font-size: clamp(15px, 2.5vw, 17px);
+  flex: 1 1 min(200px, 90vw);
 }
 
 .subscribe-cta {
   display: inline-block;
-  min-width: 200px;
+  min-width: min(200px, 80vw);
   padding: 14px 24px;
   font-size: 17px;
 }
 
 .subscribe-paid-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(min(180px, 90vw), 1fr));
   gap: 24px;
 }
 
@@ -570,7 +571,7 @@ main.container > section + section {
   flex-direction: column;
   gap: 10px;
   flex-shrink: 0;
-  min-width: 140px;
+  min-width: min(140px, 30vw);
 }
 
 .videos-player-fullscreen-wrap .videos-player-row {
@@ -678,7 +679,8 @@ main.container > section + section {
 
 .bili-player-wrap {
   width: 100%;
-  height: 480px;
+  height: min(480px, 50vh);
+  min-height: 200px;
   border-radius: 16px;
   overflow: hidden;
   background: #eaf4ff;
@@ -900,8 +902,7 @@ label {
 }
 
 .qr {
-  width: 270px;
-  max-width: 84vw;
+  width: min(270px, 84vw);
   border-radius: 16px;
   border: 1px solid #d3e3f7;
   padding: 10px;
@@ -947,7 +948,7 @@ label {
   width: min(1220px, 94vw);
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 220px 1fr 250px;
+  grid-template-columns: minmax(0, 220px) 1fr minmax(0, 250px);
   gap: 12px;
 }
 
@@ -1102,7 +1103,8 @@ label {
 
 #circuitCanvas {
   width: 100%;
-  height: 620px;
+  height: min(620px, 70vh);
+  min-height: 280px;
   border: 1px solid #d1e2f6;
   border-radius: 14px;
   background: #fff;
@@ -1175,7 +1177,8 @@ label {
     padding: 0 12px;
   }
   #circuitCanvas {
-    height: 400px;
+    height: min(400px, 55vh);
+    min-height: 280px;
   }
   .grid-two {
     grid-template-columns: 1fr;
@@ -1217,6 +1220,9 @@ label {
     grid-template-columns: 1fr;
   }
   #circuitCanvas {
-    height: 480px;
+    height: min(480px, 60vh);
+  }
+  .sim-layout {
+    grid-template-columns: minmax(0, 180px) 1fr minmax(0, 200px);
   }
 }
