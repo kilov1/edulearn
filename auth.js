@@ -128,7 +128,6 @@
       const email = emailInput.value.trim();
       const password = passwordInput.value;
       const confirm = confirmInput.value;
-      const avatar = avatarValue.value || AVATAR_COLORS[0];
 
       // 验证输入
       if (!username || username.length < 3 || username.length > 32) {
@@ -154,38 +153,49 @@
         return;
       }
 
-      // 1. 先在 Supabase Auth 中注册
-      const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
+      try {
+        // 1. 调用 supabase.auth.signUp 注册
+        const { data, error: authError } = await sb.auth.signUp({ email, password });
 
-      if (authError) {
-        if (authError.message && (authError.message.includes("already") || authError.message.includes("registered"))) {
-          showMessage("邮箱已被注册", false);
-        } else {
-          showMessage(authError.message || "注册失败", false);
+        if (authError) {
+          console.error("Auth signUp error:", authError);
+          showMessage("注册失败，请重试", false);
+          return;
         }
-        return;
-      }
 
-      // 2. 在 user_info 表中插入用户信息
-      const { error: insertError } = await sb.from("user_info").insert([
-        {
-          username,
-          email,
-          avatar_color: avatar,
-          created_at: new Date().toISOString()
+        if (!data.user || !data.user.id) {
+          console.error("No user ID returned from signUp");
+          showMessage("注册失败，请重试", false);
+          return;
         }
-      ]);
 
-      if (insertError) {
-        showMessage("保存用户信息失败", false);
-        return;
-      }
+        const userId = data.user.id;
+        console.log("User registered successfully, ID:", userId);
 
-      localStorage.setItem(CURRENT_KEY, username);
-      showMessage("注册成功，正在跳转首页...", true);
-      setTimeout(() => {
+        // 2. 往 user_info 插入 id、username、email
+        const { error: insertError } = await sb.from("user_info").insert([
+          {
+            id: userId,
+            username,
+            email
+          }
+        ]);
+
+        if (insertError) {
+          console.error("Insert user_info error:", insertError);
+          showMessage("保存用户信息失败，请重试", false);
+          return;
+        }
+
+        console.log("User info saved successfully");
+
+        // 3. 成功后直接跳 index.html
+        localStorage.setItem(CURRENT_KEY, username);
         window.location.href = "index.html";
-      }, 700);
+      } catch (err) {
+        console.error("Registration error:", err);
+        showMessage("注册失败，请重试", false);
+      }
     });
   }
 
