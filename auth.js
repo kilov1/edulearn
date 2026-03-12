@@ -183,8 +183,7 @@
 
         if (insertError) {
           console.error("Insert user_info error:", insertError);
-          showMessage("保存用户信息失败，请重试", false);
-          return;
+          // 插入失败也继续跳转，不弹错误
         }
 
         console.log("User info saved successfully");
