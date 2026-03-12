@@ -1,7 +1,45 @@
 (() => {
   const USERS_KEY = "edu_users";
   const CURRENT_KEY = "edu_current_user";
+  const EMAIL_SUFFIX = "@edulearn.local";
   const AVATAR_COLORS = ["#4f46e5", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#9333ea", "#f43f5e", "#14b8a6"];
+
+  function emailToUsername(email) {
+    if (!email || !email.endsWith(EMAIL_SUFFIX)) return "";
+    return email.slice(0, -EMAIL_SUFFIX.length);
+  }
+
+  function getUsers() {
+    try {
+      return JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
+    } catch (_err) {
+      return [];
+    }
+  }
+
+  function setUsers(list) {
+    localStorage.setItem(USERS_KEY, JSON.stringify(list));
+  }
+
+  function ensureUserInStorage(username) {
+    const users = getUsers();
+    let user = users.find((u) => u.username.toLowerCase() === (username || "").toLowerCase());
+    if (!user) {
+      user = {
+        username,
+        email: "",
+        avatarColor: AVATAR_COLORS[0],
+        profile: { nickname: username, realName: "", school: "", birthday: "", gender: "未填写" },
+        stats: { totalMinutes: 0, wrongCount: 0 },
+        progress: { videosWatched: [], booksRead: [], quizTotal: 0, quizCorrect: 0, homeworkScore: 0 },
+        wrongBook: [],
+        subscribed: false
+      };
+      users.push(user);
+      setUsers(users);
+    }
+    return user;
+  }
 
   const chapters = [
     {
@@ -281,7 +319,7 @@
   function getCurrentUser() {
     const username = currentUsername();
     if (!username) return null;
-    return getUsers().find((u) => u.username === username) || null;
+    return getUsers().find((u) => u.username.toLowerCase() === username.toLowerCase()) || null;
   }
 
   function ensureUserShape(user) {
@@ -361,7 +399,9 @@
     if (avatarEl) avatarEl.style.background = user.avatarColor;
     if (nameEl) nameEl.textContent = user.profile.nickname || user.username;
     if (logoutBtn) {
-      logoutBtn.addEventListener("click", () => {
+      logoutBtn.addEventListener("click", async () => {
+        const sb = window.supabaseClient;
+        if (sb) await sb.auth.signOut();
         localStorage.removeItem(CURRENT_KEY);
         window.location.href = "login.html";
       });
@@ -955,6 +995,7 @@
       profileForm.school.value = user.profile.school || "";
       profileForm.birthday.value = user.profile.birthday || "";
       profileForm.gender.value = user.profile.gender || "未填写";
+      profileForm.username.value = user.username || "";
       avatarValue.value = user.avatarColor;
       renderAvatarOptions(avatarOptions, avatarValue, user.avatarColor);
 
@@ -973,15 +1014,40 @@
 
     profileForm.addEventListener("submit", (event) => {
       event.preventDefault();
-      updateCurrentUser((u) => {
-        u.profile.nickname = profileForm.nickname.value.trim() || u.username;
-        u.profile.realName = profileForm.realName.value.trim();
-        u.profile.school = profileForm.school.value.trim();
-        u.profile.birthday = profileForm.birthday.value;
-        u.profile.gender = profileForm.gender.value;
-        u.avatarColor = avatarValue.value || AVATAR_COLORS[0];
-      });
+      const newUsername = profileForm.username?.value.trim();
+      const currentUser = getCurrentUser();
+      
+      // 如果修改了用户名，需要检查唯一性
+      if (newUsername && newUsername !== currentUser.username) {
+        const users = getUsers();
+        if (users.some((u) => u.username.toLowerCase() === newUsername.toLowerCase())) {
+          profileMsg.textContent = "用户名已被使用，请选择其他名称。";
+          profileMsg.className = "muted error";
+          return;
+        }
+        // 更新用户名
+        updateCurrentUser((u) => {
+          u.username = newUsername;
+          u.profile.nickname = profileForm.nickname.value.trim() || newUsername;
+          u.profile.realName = profileForm.realName.value.trim();
+          u.profile.school = profileForm.school.value.trim();
+          u.profile.birthday = profileForm.birthday.value;
+          u.profile.gender = profileForm.gender.value;
+          u.avatarColor = avatarValue.value || AVATAR_COLORS[0];
+        });
+        localStorage.setItem(CURRENT_KEY, newUsername);
+      } else {
+        updateCurrentUser((u) => {
+          u.profile.nickname = profileForm.nickname.value.trim() || u.username;
+          u.profile.realName = profileForm.realName.value.trim();
+          u.profile.school = profileForm.school.value.trim();
+          u.profile.birthday = profileForm.birthday.value;
+          u.profile.gender = profileForm.gender.value;
+          u.avatarColor = avatarValue.value || AVATAR_COLORS[0];
+        });
+      }
       profileMsg.textContent = "资料更新成功。";
+      profileMsg.className = "muted";
       refresh();
     });
 
@@ -1019,9 +1085,24 @@
     });
   }
 
-  if (!requireAuth()) return;
-  wireBackButtons();
-  setupHeader();
+  (async function init() {
+    const sb = window.supabaseClient;
+    if (sb && protectedPages.includes(page)) {
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) {
+        localStorage.removeItem(CURRENT_KEY);
+        window.location.href = "login.html";
+        return;
+      }
+      const username = emailToUsername(session.user?.email);
+      if (username) {
+        localStorage.setItem(CURRENT_KEY, username);
+        ensureUserInStorage(username);
+      }
+    }
+    if (!requireAuth()) return;
+    wireBackButtons();
+    setupHeader();
 
   const videoModal = document.getElementById("videoModal");
   const videoModalClose = document.getElementById("videoModalClose");
@@ -1075,4 +1156,5 @@
   if (page === "premium-quiz") renderPremiumQuiz();
   if (page === "profile") renderProfile();
   if (page === "password") renderPasswordPage();
+  })();
 })();

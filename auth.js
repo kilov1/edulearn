@@ -2,23 +2,29 @@
   const USERS_KEY = "edu_users";
   const CURRENT_KEY = "edu_current_user";
   const AVATAR_COLORS = ["#4f46e5", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#9333ea", "#f43f5e", "#14b8a6"];
+  const EMAIL_SUFFIX = "@edulearn.local";
 
   const loginForm = document.getElementById("loginForm");
   const registerForm = document.getElementById("registerForm");
   const message = document.getElementById("message");
   const usernameInput = document.getElementById("username");
+  const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
   const confirmInput = document.getElementById("confirmPassword");
   const usernameCheck = document.getElementById("usernameCheck");
+  const emailCheck = document.getElementById("emailCheck");
   const confirmCheck = document.getElementById("confirmCheck");
   const strengthBar = document.getElementById("strengthBar");
   const strengthText = document.getElementById("strengthText");
   const avatarOptions = document.getElementById("avatarOptions");
   const avatarValue = document.getElementById("avatarValue");
 
-  if (localStorage.getItem(CURRENT_KEY)) {
-    window.location.href = "index.html";
-    return;
+  function getSupabase() {
+    return window.supabaseClient || null;
+  }
+
+  function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   }
 
   function getUsers() {
@@ -33,10 +39,16 @@
     localStorage.setItem(USERS_KEY, JSON.stringify(list));
   }
 
-  function isUsernameTaken(name) {
-    const users = getUsers();
-    return users.some((u) => u.username.toLowerCase() === name.toLowerCase());
+  async function checkSessionAndRedirect() {
+    const sb = getSupabase();
+    if (!sb) return;
+    const { data: { session } } = await sb.auth.getSession();
+    if (session) {
+      window.location.href = "index.html";
+    }
   }
+
+  checkSessionAndRedirect();
 
   function validPassword(pwd) {
     return /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,16}$/.test(pwd);
@@ -59,6 +71,42 @@
     message.className = ok ? "msg ok" : "msg error";
   }
 
+  function createDefaultUser(username, avatar, email) {
+    return {
+      username,
+      email: email || "",
+      avatarColor: avatar || AVATAR_COLORS[0],
+      profile: {
+        nickname: username,
+        realName: "",
+        school: "",
+        birthday: "",
+        gender: "未填写"
+      },
+      stats: { totalMinutes: 0, wrongCount: 0 },
+      progress: {
+        videosWatched: [],
+        booksRead: [],
+        quizTotal: 0,
+        quizCorrect: 0,
+        homeworkScore: 0
+      },
+      wrongBook: [],
+      subscribed: false
+    };
+  }
+
+  function ensureUserInStorage(username, avatar, email) {
+    const users = getUsers();
+    let user = users.find((u) => u.username.toLowerCase() === username.toLowerCase());
+    if (!user) {
+      user = createDefaultUser(username, avatar, email);
+      users.push(user);
+      setUsers(users);
+    }
+    return user;
+  }
+
   function renderAvatarOptions() {
     if (!avatarOptions) return;
     avatarOptions.innerHTML = "";
@@ -79,21 +127,31 @@
   if (registerForm) {
     renderAvatarOptions();
 
-    usernameInput.addEventListener("input", () => {
-      const val = usernameInput.value.trim();
-      if (!val) {
-        usernameCheck.textContent = "请输入 3~32 位用户名";
-        usernameCheck.className = "hint";
-        return;
-      }
-      if (isUsernameTaken(val)) {
-        usernameCheck.textContent = "用户名已存在";
-        usernameCheck.className = "hint bad";
-      } else {
-        usernameCheck.textContent = "用户名可用";
+    if (usernameCheck) {
+      usernameInput.addEventListener("input", () => {
+        const val = usernameInput.value.trim();
+        if (!val || val.length < 3 || val.length > 32) {
+          usernameCheck.textContent = "请输入 3~32 位用户名";
+          usernameCheck.className = "hint";
+          return;
+        }
+        usernameCheck.textContent = "用户名已填写";
         usernameCheck.className = "hint ok";
-      }
-    });
+      });
+    }
+
+    if (emailCheck) {
+      emailInput.addEventListener("input", () => {
+        const val = emailInput.value.trim();
+        if (!val || !isValidEmail(val)) {
+          emailCheck.textContent = "请输入有效的邮箱地址";
+          emailCheck.className = "hint";
+          return;
+        }
+        emailCheck.textContent = "邮箱格式正确";
+        emailCheck.className = "hint ok";
+      });
+    }
 
     passwordInput.addEventListener("input", () => {
       const state = getStrength(passwordInput.value);
@@ -113,15 +171,20 @@
       }
     });
 
-    registerForm.addEventListener("submit", (event) => {
+    registerForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       const username = usernameInput.value.trim();
+      const email = emailInput.value.trim();
       const password = passwordInput.value;
       const confirm = confirmInput.value;
       const avatar = avatarValue.value || AVATAR_COLORS[0];
 
-      if (isUsernameTaken(username)) {
-        showMessage("用户名已存在", false);
+      if (!username || username.length < 3 || username.length > 32) {
+        showMessage("用户名需 3~32 位", false);
+        return;
+      }
+      if (!isValidEmail(email)) {
+        showMessage("请输入有效的邮箱地址", false);
         return;
       }
       if (!validPassword(password)) {
@@ -133,48 +196,67 @@
         return;
       }
 
-      const users = getUsers();
-      users.push({
-        username,
-        password,
-        avatarColor: avatar,
-        profile: {
-          nickname: username,
-          realName: "",
-          school: "",
-          birthday: "",
-          gender: "未填写"
-        },
-        stats: { totalMinutes: 0, wrongCount: 0 },
-        progress: {
-          videosWatched: [],
-          booksRead: [],
-          quizTotal: 0,
-          quizCorrect: 0,
-          homeworkScore: 0
-        },
-        wrongBook: [],
-        subscribed: false
-      });
-      setUsers(users);
-      showMessage("注册成功，正在跳转登录页...", true);
+      const sb = getSupabase();
+      if (!sb) {
+        showMessage("Supabase 未加载，请刷新页面", false);
+        return;
+      }
+
+      const { data, error } = await sb.auth.signUp({ email, password });
+
+      if (error) {
+        if (error.message && (error.message.includes("already") || error.message.includes("registered"))) {
+          showMessage("邮箱已被注册", false);
+        } else {
+          showMessage(error.message || "注册失败", false);
+        }
+        return;
+      }
+
+      ensureUserInStorage(username, avatar, email);
+      localStorage.setItem(CURRENT_KEY, username);
+      showMessage("注册成功，正在跳转首页...", true);
       setTimeout(() => {
-        window.location.href = "login.html";
+        window.location.href = "index.html";
       }, 700);
     });
   }
 
   if (loginForm) {
-    loginForm.addEventListener("submit", (event) => {
+    loginForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       const username = loginForm.username.value.trim();
       const password = loginForm.password.value;
-      const users = getUsers();
-      const user = users.find((u) => u.username === username && u.password === password);
-      if (!user) {
-        showMessage("用户名或密码错误", false);
+
+      if (!username) {
+        showMessage("请输入用户名", false);
         return;
       }
+
+      const sb = getSupabase();
+      if (!sb) {
+        showMessage("Supabase 未加载，请刷新页面", false);
+        return;
+      }
+
+      // 从本地存储查找用户，获取其邮箱
+      const users = getUsers();
+      const user = users.find((u) => u.username.toLowerCase() === username.toLowerCase());
+      
+      if (!user || !user.email) {
+        showMessage("用户名不存在", false);
+        return;
+      }
+
+      // 用邮箱和密码登录 Supabase
+      const { data, error } = await sb.auth.signInWithPassword({ email: user.email, password });
+
+      if (error) {
+        showMessage("密码错误", false);
+        return;
+      }
+
+      ensureUserInStorage(username);
       localStorage.setItem(CURRENT_KEY, username);
       showMessage("登录成功，正在跳转首页...", true);
       setTimeout(() => {

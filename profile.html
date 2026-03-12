@@ -31,6 +31,10 @@
       <form id="profileForm" class="hidden">
         <div class="grid-two">
           <div>
+            <label>用户名</label>
+            <input name="username" maxlength="32" />
+          </div>
+          <div>
             <label>昵称</label>
             <input name="nickname" maxlength="24" />
           </div>
@@ -81,6 +85,9 @@
     <a class="active" href="profile.html">我的</a>
   </nav>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="keep-alive.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
