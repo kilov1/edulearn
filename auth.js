@@ -1,8 +1,6 @@
 (function () {
-  const USERS_KEY = "edu_users";
   const CURRENT_KEY = "edu_current_user";
   const AVATAR_COLORS = ["#4f46e5", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#9333ea", "#f43f5e", "#14b8a6"];
-  const EMAIL_SUFFIX = "@edulearn.local";
 
   const loginForm = document.getElementById("loginForm");
   const registerForm = document.getElementById("registerForm");
@@ -25,18 +23,6 @@
 
   function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  }
-
-  function getUsers() {
-    try {
-      return JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
-    } catch (_err) {
-      return [];
-    }
-  }
-
-  function setUsers(list) {
-    localStorage.setItem(USERS_KEY, JSON.stringify(list));
   }
 
   async function checkSessionAndRedirect() {
@@ -71,42 +57,6 @@
     message.className = ok ? "msg ok" : "msg error";
   }
 
-  function createDefaultUser(username, avatar, email) {
-    return {
-      username,
-      email: email || "",
-      avatarColor: avatar || AVATAR_COLORS[0],
-      profile: {
-        nickname: username,
-        realName: "",
-        school: "",
-        birthday: "",
-        gender: "未填写"
-      },
-      stats: { totalMinutes: 0, wrongCount: 0 },
-      progress: {
-        videosWatched: [],
-        booksRead: [],
-        quizTotal: 0,
-        quizCorrect: 0,
-        homeworkScore: 0
-      },
-      wrongBook: [],
-      subscribed: false
-    };
-  }
-
-  function ensureUserInStorage(username, avatar, email) {
-    const users = getUsers();
-    let user = users.find((u) => u.username.toLowerCase() === username.toLowerCase());
-    if (!user) {
-      user = createDefaultUser(username, avatar, email);
-      users.push(user);
-      setUsers(users);
-    }
-    return user;
-  }
-
   function renderAvatarOptions() {
     if (!avatarOptions) return;
     avatarOptions.innerHTML = "";
@@ -124,6 +74,7 @@
     });
   }
 
+  // 注册表单处理
   if (registerForm) {
     renderAvatarOptions();
 
@@ -179,6 +130,7 @@
       const confirm = confirmInput.value;
       const avatar = avatarValue.value || AVATAR_COLORS[0];
 
+      // 验证输入
       if (!username || username.length < 3 || username.length > 32) {
         showMessage("用户名需 3~32 位", false);
         return;
@@ -202,18 +154,33 @@
         return;
       }
 
-      const { data, error } = await sb.auth.signUp({ email, password });
+      // 1. 先在 Supabase Auth 中注册
+      const { data: authData, error: authError } = await sb.auth.signUp({ email, password });
 
-      if (error) {
-        if (error.message && (error.message.includes("already") || error.message.includes("registered"))) {
+      if (authError) {
+        if (authError.message && (authError.message.includes("already") || authError.message.includes("registered"))) {
           showMessage("邮箱已被注册", false);
         } else {
-          showMessage(error.message || "注册失败", false);
+          showMessage(authError.message || "注册失败", false);
         }
         return;
       }
 
-      ensureUserInStorage(username, avatar, email);
+      // 2. 在 user_info 表中插入用户信息
+      const { error: insertError } = await sb.from("user_info").insert([
+        {
+          username,
+          email,
+          avatar_color: avatar,
+          created_at: new Date().toISOString()
+        }
+      ]);
+
+      if (insertError) {
+        showMessage("保存用户信息失败", false);
+        return;
+      }
+
       localStorage.setItem(CURRENT_KEY, username);
       showMessage("注册成功，正在跳转首页...", true);
       setTimeout(() => {
@@ -222,6 +189,7 @@
     });
   }
 
+  // 登录表单处理
   if (loginForm) {
     loginForm.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -239,24 +207,29 @@
         return;
       }
 
-      // 从本地存储查找用户，获取其邮箱
-      const users = getUsers();
-      const user = users.find((u) => u.username.toLowerCase() === username.toLowerCase());
-      
-      if (!user || !user.email) {
+      // 1. 从 user_info 表查询用户，获取邮箱
+      const { data: userData, error: queryError } = await sb
+        .from("user_info")
+        .select("email")
+        .eq("username", username)
+        .single();
+
+      if (queryError || !userData) {
         showMessage("用户名不存在", false);
         return;
       }
 
-      // 用邮箱和密码登录 Supabase
-      const { data, error } = await sb.auth.signInWithPassword({ email: user.email, password });
+      // 2. 用邮箱和密码登录 Supabase Auth
+      const { data: authData, error: authError } = await sb.auth.signInWithPassword({
+        email: userData.email,
+        password
+      });
 
-      if (error) {
+      if (authError) {
         showMessage("密码错误", false);
         return;
       }
 
-      ensureUserInStorage(username);
       localStorage.setItem(CURRENT_KEY, username);
       showMessage("登录成功，正在跳转首页...", true);
       setTimeout(() => {
