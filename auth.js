@@ -188,11 +188,12 @@
 
         console.log("User info saved successfully");
 
-        // 已禁用自动跳转
-        // 3. 成功后直接跳 index.html
+        // 成功后直接跳 index.html
         localStorage.setItem(CURRENT_KEY, username);
-        // window.location.href = "index.html";
-        showMessage("注册成功", true);
+        showMessage("注册成功，正在跳转首页...", true);
+        setTimeout(() => {
+          window.location.href = "index.html";
+        }, 700);
       } catch (err) {
         console.error("Registration error:", err);
         showMessage("注册失败，请重试", false);
@@ -242,12 +243,10 @@
       }
 
       localStorage.setItem(CURRENT_KEY, username);
-      // 已禁用自动跳转
-      // showMessage("登录成功，正在跳转首页...", true);
-      // setTimeout(() => {
-      //   window.location.href = "index.html";
-      // }, 400);
-      showMessage("登录成功", true);
+      showMessage("登录成功，正在跳转首页...", true);
+      setTimeout(() => {
+        window.location.href = "index.html";
+      }, 400);
     });
   }
 })();
