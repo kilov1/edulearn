@@ -228,12 +228,12 @@
   const page = document.body.dataset.page || "";
   const protectedPages = ["home", "video", "videos", "books", "book-read", "quiz", "subscribe", "pay", "premium", "premium-resources", "premium-papers", "premium-resource", "premium-quiz", "profile", "password", "simulator"];
 
-  // B站视频 BV 号或链接映射，将 【这里替换成你的BV号】 替换为实际 BV 号或 b23.tv 链接即可
+  // B站视频：使用分享链接（如 https://www.bilibili.com/video/BV1xx）或 BV 号，b23.tv 短链需换成完整链接
   const videoBvids = {
-    "ch1:v11": "https://b23.tv/waJO01P",
-    "ch1:v12": "https://b23.tv/waJO01P",
-    "ch2:v21": "https://b23.tv/waJO01P",
-    "ch2:v22": "https://b23.tv/waJO01P",
+    "ch1:v11": "https://www.bilibili.com/video/BV1GJ411x7h7",
+    "ch1:v12": "https://www.bilibili.com/video/BV1GJ411x7h7",
+    "ch2:v21": "https://www.bilibili.com/video/BV1GJ411x7h7",
+    "ch2:v22": "https://www.bilibili.com/video/BV1GJ411x7h7",
     "ch3:v31": "【这里替换成你的BV号】",
     "ch3:v32": "【这里替换成你的BV号】",
     "ch4:v41": "【这里替换成你的BV号】",
@@ -437,18 +437,26 @@
     const modal = document.getElementById("videoModal");
     const titleEl = document.getElementById("videoModalTitle");
     const metaEl = document.getElementById("videoModalMeta");
+    const playerWrap = document.getElementById("videoModalPlayer");
     if (!modal || !titleEl || !metaEl) return;
     titleEl.textContent = videoTitle;
     metaEl.textContent = `${chapterName} · 时长 ${duration}`;
+    const key = `${chapterId}:${videoId}`;
+    const shareLink = videoBvids[key] || "【这里替换成你的BV号】";
+    const src = getBiliPlayerUrl(shareLink);
+    playerWrap.innerHTML = `<iframe class="bili-player-inline" src="${src}" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"></iframe>`;
     modal.classList.remove("hidden");
   }
 
-  function getBiliPlayerUrl(bvidOrUrl) {
-    if (bvidOrUrl && (bvidOrUrl.startsWith("http://") || bvidOrUrl.startsWith("https://"))) {
-      return bvidOrUrl;
-    }
-    const bv = (bvidOrUrl && bvidOrUrl !== "【这里替换成你的BV号】") ? bvidOrUrl : "BV1GJ411x7h7";
-    return `//player.bilibili.com/player.html?bvid=${encodeURIComponent(bv)}&page=1&high_quality=1&danmaku=0&show_related=0`;
+  function extractBvidFromShareLink(link) {
+    if (!link || link === "【这里替换成你的BV号】") return null;
+    const m = String(link).match(/(BV[a-zA-Z0-9]+)/i);
+    return m ? m[1] : (link.startsWith("BV") ? link : null);
+  }
+
+  function getBiliPlayerUrl(shareLinkOrBvid) {
+    const bv = extractBvidFromShareLink(shareLinkOrBvid) || "BV1GJ411x7h7";
+    return `https://player.bilibili.com/player.html?bvid=${encodeURIComponent(bv)}&page=1&high_quality=1&danmaku=0&show_related=0`;
   }
 
   function renderVideosPage() {
@@ -1016,9 +1024,34 @@
 
   const videoModal = document.getElementById("videoModal");
   const videoModalClose = document.getElementById("videoModalClose");
+  const videoModalPlayer = document.getElementById("videoModalPlayer");
+  const videoModalFullscreenWrap = document.getElementById("videoModalFullscreenWrap");
+  const videoModalFullscreenBtn = document.getElementById("videoModalFullscreenBtn");
   if (videoModal && videoModalClose) {
-    videoModalClose.addEventListener("click", () => videoModal.classList.add("hidden"));
-    videoModal.addEventListener("click", (e) => { if (e.target === videoModal) videoModal.classList.add("hidden"); });
+    videoModalClose.addEventListener("click", () => {
+      if (document.fullscreenElement) document.exitFullscreen();
+      if (videoModalPlayer) videoModalPlayer.innerHTML = '<span class="video-player-placeholder">加载中...</span>';
+      videoModal.classList.add("hidden");
+    });
+    videoModal.addEventListener("click", (e) => {
+      if (e.target === videoModal) {
+        if (document.fullscreenElement) document.exitFullscreen();
+        if (videoModalPlayer) videoModalPlayer.innerHTML = '<span class="video-player-placeholder">加载中...</span>';
+        videoModal.classList.add("hidden");
+      }
+    });
+  }
+  if (videoModalFullscreenWrap && videoModalFullscreenBtn) {
+    videoModalFullscreenBtn.addEventListener("click", () => {
+      if (!document.fullscreenElement) {
+        videoModalFullscreenWrap.requestFullscreen().then(() => { videoModalFullscreenBtn.textContent = "退出全屏"; }).catch(() => {});
+      } else {
+        document.exitFullscreen().then(() => { videoModalFullscreenBtn.textContent = "全屏"; });
+      }
+    });
+    document.addEventListener("fullscreenchange", () => {
+      if (!document.fullscreenElement && videoModalFullscreenBtn) videoModalFullscreenBtn.textContent = "全屏";
+    });
   }
 
   if (page === "home") renderHome();

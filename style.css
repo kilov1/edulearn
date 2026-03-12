@@ -458,6 +458,32 @@ main.container > section + section {
   font-size: 14px;
 }
 
+.video-modal-player-wrap {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #1e293b;
+}
+
+.video-modal-player-wrap .bili-player-inline {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+}
+
+.video-modal-fullscreen-btn {
+  margin-top: 12px;
+}
+
+.video-modal-inner:fullscreen,
+.video-modal-inner:-webkit-full-screen {
+  max-width: none;
+  width: 100%;
+  padding: 16px;
+}
+
 .video-player-placeholder {
   aspect-ratio: 16/9;
   background: #e2e8f0;
@@ -679,11 +705,10 @@ main.container > section + section {
 
 .bili-player-wrap {
   width: 100%;
-  height: min(480px, 50vh);
-  min-height: 200px;
+  aspect-ratio: 16/9;
   border-radius: 16px;
   overflow: hidden;
-  background: #eaf4ff;
+  background: #1e293b;
   box-shadow: 0 8px 24px rgba(43, 92, 154, 0.15);
 }
 

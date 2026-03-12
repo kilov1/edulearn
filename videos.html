@@ -35,12 +35,12 @@
       <div id="videosPlayerFullscreenWrap" class="videos-player-fullscreen-wrap">
         <div class="videos-player-row">
           <div id="biliPlayerWrap" class="bili-player-wrap">
-            <iframe id="biliPlayerIframe" class="bili-player" src="about:blank" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"></iframe>
+            <iframe id="biliPlayerIframe" class="bili-player" src="about:blank" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" sandbox="allow-scripts allow-same-origin allow-presentation allow-forms"></iframe>
           </div>
           <div class="videos-player-side">
             <button id="videosBackBtn" class="btn primary videos-action-btn">返回视频列表</button>
             <button id="videosFullscreenBtn" class="btn ghost videos-action-btn">全屏</button>
-            <p class="videos-fullscreen-hint">进入全屏之后可点击b站中的网页全屏按键</p>
+            <p class="videos-fullscreen-hint">点击全屏将在当前页面内全屏播放，不会跳转 B 站 APP</p>
           </div>
         </div>
         <p id="videosPlayerTitle" class="videos-player-title"></p>

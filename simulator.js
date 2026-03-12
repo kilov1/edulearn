@@ -60,7 +60,8 @@
       x = e.clientX - rect.left;
       y = e.clientY - rect.top;
     }
-    return { x, y };
+    mouse = { x, y };
+    return mouse;
   }
 
   function handlePointerDown(e) {
@@ -97,6 +98,7 @@
     if (!c) return;
     c.x = mouse.x - drag.dx;
     c.y = mouse.y - drag.dy;
+    clampCompToBounds(c);
     rerender();
   }
 
@@ -133,6 +135,15 @@
 
   function sameTerminal(t1, t2) {
     return t1.componentId === t2.componentId && t1.terminal === t2.terminal;
+  }
+
+  function clampCompToBounds(c) {
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    const hw = c.width / 2;
+    const hh = c.height / 2;
+    c.x = Math.max(hw, Math.min(w - hw, c.x));
+    c.y = Math.max(hh, Math.min(h - hh, c.y));
   }
 
   function addWire(a, b) {
@@ -494,10 +505,30 @@
     }
   });
 
-  document.getElementById("addSourceBtn").addEventListener("click", () => { comps.push(makeComp(TYPE.SOURCE)); rerender(); });
-  document.getElementById("addSwitchBtn").addEventListener("click", () => { comps.push(makeComp(TYPE.SWITCH)); rerender(); });
-  document.getElementById("addResistorBtn").addEventListener("click", () => { comps.push(makeComp(TYPE.RESISTOR)); rerender(); });
-  document.getElementById("addLedBtn").addEventListener("click", () => { comps.push(makeComp(TYPE.LED)); rerender(); });
+  document.getElementById("addSourceBtn").addEventListener("click", () => {
+    const c = makeComp(TYPE.SOURCE);
+    clampCompToBounds(c);
+    comps.push(c);
+    rerender();
+  });
+  document.getElementById("addSwitchBtn").addEventListener("click", () => {
+    const c = makeComp(TYPE.SWITCH);
+    clampCompToBounds(c);
+    comps.push(c);
+    rerender();
+  });
+  document.getElementById("addResistorBtn").addEventListener("click", () => {
+    const c = makeComp(TYPE.RESISTOR);
+    clampCompToBounds(c);
+    comps.push(c);
+    rerender();
+  });
+  document.getElementById("addLedBtn").addEventListener("click", () => {
+    const c = makeComp(TYPE.LED);
+    clampCompToBounds(c);
+    comps.push(c);
+    rerender();
+  });
   document.getElementById("clearWiresBtn").addEventListener("click", () => { wires.length = 0; wireStart = null; rerender(); });
   document.getElementById("clearAllBtn").addEventListener("click", () => { comps.length = 0; wires.length = 0; selectedId = null; wireStart = null; rerender(); });
   document.getElementById("deleteSelectedBtn").addEventListener("click", () => {
@@ -527,6 +558,7 @@
 
   window.addEventListener("resize", () => {
     setCanvasSize();
+    comps.forEach(clampCompToBounds);
     draw();
   });
 

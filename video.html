@@ -31,13 +31,14 @@
   </main>
 
   <div id="videoModal" class="video-modal hidden">
-    <div class="video-modal-inner">
+    <div id="videoModalFullscreenWrap" class="video-modal-inner">
       <button id="videoModalClose" class="video-modal-close">×</button>
       <h3 id="videoModalTitle"></h3>
       <p id="videoModalMeta" class="muted"></p>
-      <div id="videoModalPlayer" class="video-player-placeholder">
-        <span>视频播放区域</span>
+      <div id="videoModalPlayer" class="video-modal-player-wrap">
+        <span class="video-player-placeholder">加载中...</span>
       </div>
+      <button id="videoModalFullscreenBtn" class="btn ghost video-modal-fullscreen-btn">全屏</button>
     </div>
   </div>
 
