@@ -228,38 +228,38 @@
   const page = document.body.dataset.page || "";
   const protectedPages = ["home", "video", "videos", "books", "book-read", "quiz", "subscribe", "pay", "premium", "premium-resources", "premium-papers", "premium-resource", "premium-quiz", "profile", "password", "simulator"];
 
-  // B站视频：使用分享链接（如 https://www.bilibili.com/video/BV1xx）或 BV 号，b23.tv 短链需换成完整链接
+  // B站视频：根据教学标题搜索匹配的分享链接
   const videoBvids = {
-    "ch1:v11": "https://www.bilibili.com/video/BV1GJ411x7h7",
-    "ch1:v12": "https://www.bilibili.com/video/BV1GJ411x7h7",
-    "ch2:v21": "https://www.bilibili.com/video/BV1GJ411x7h7",
-    "ch2:v22": "https://www.bilibili.com/video/BV1GJ411x7h7",
-    "ch3:v31": "【这里替换成你的BV号】",
-    "ch3:v32": "【这里替换成你的BV号】",
-    "ch4:v41": "【这里替换成你的BV号】",
-    "ch4:v42": "【这里替换成你的BV号】",
-    "ch5:v51": "【这里替换成你的BV号】",
-    "ch5:v52": "【这里替换成你的BV号】",
-    "ch6:v61": "【这里替换成你的BV号】",
-    "ch6:v62": "【这里替换成你的BV号】",
-    "ch7:v71": "【这里替换成你的BV号】",
-    "ch7:v72": "【这里替换成你的BV号】",
-    "ch8:v81": "【这里替换成你的BV号】",
-    "ch8:v82": "【这里替换成你的BV号】",
-    "ch9:v91": "【这里替换成你的BV号】",
-    "ch9:v92": "【这里替换成你的BV号】",
-    "ch10:v101": "【这里替换成你的BV号】",
-    "ch10:v102": "【这里替换成你的BV号】",
-    "ch11:v111": "【这里替换成你的BV号】",
-    "ch11:v112": "【这里替换成你的BV号】",
-    "ch12:v121": "【这里替换成你的BV号】",
-    "ch12:v122": "【这里替换成你的BV号】",
-    "ch14:v141": "【这里替换成你的BV号】",
-    "ch14:v142": "【这里替换成你的BV号】",
-    "ch15:v151": "【这里替换成你的BV号】",
-    "ch15:v152": "【这里替换成你的BV号】",
-    "ch16:v161": "【这里替换成你的BV号】",
-    "ch16:v162": "【这里替换成你的BV号】"
+    "ch1:v11": "https://www.bilibili.com/video/BV1t4411t7v6",
+    "ch1:v12": "https://www.bilibili.com/video/BV1vY4y1F7cu",
+    "ch2:v21": "https://www.bilibili.com/video/BV1xJ411R7b6",
+    "ch2:v22": "https://www.bilibili.com/video/BV1vY4y1F7cu",
+    "ch3:v31": "https://www.bilibili.com/video/BV1cY4y1T7JU",
+    "ch3:v32": "https://www.bilibili.com/video/BV1Jv411j7SS",
+    "ch4:v41": "https://www.bilibili.com/video/BV1cY4y1T7JU",
+    "ch4:v42": "https://www.bilibili.com/video/BV1i34112768",
+    "ch5:v51": "https://www.bilibili.com/video/BV1pv4y1K7NL",
+    "ch5:v52": "https://www.bilibili.com/video/BV1ho4y1u7Z9",
+    "ch6:v61": "https://www.bilibili.com/video/BV1ho4y1u7Z9",
+    "ch6:v62": "https://www.bilibili.com/video/BV1VE41167wz",
+    "ch7:v71": "https://www.bilibili.com/video/BV1XK411J7Yi",
+    "ch7:v72": "https://www.bilibili.com/video/BV1pS4y1R7RQ",
+    "ch8:v81": "https://www.bilibili.com/video/BV1DD4y1r7uT",
+    "ch8:v82": "https://www.bilibili.com/video/BV1DD4y1r7uT",
+    "ch9:v91": "https://www.bilibili.com/video/BV1SK411c7w3",
+    "ch9:v92": "https://www.bilibili.com/video/BV1W144e3EZL",
+    "ch10:v101": "https://www.bilibili.com/video/BV1qt411R7vJ",
+    "ch10:v102": "https://www.bilibili.com/video/BV1qt411R7vJ",
+    "ch11:v111": "https://www.bilibili.com/video/BV1qt411R7vJ",
+    "ch11:v112": "https://www.bilibili.com/video/BV1VJ4m1V75F",
+    "ch12:v121": "https://www.bilibili.com/video/BV1yf421Q7bS",
+    "ch12:v122": "https://www.bilibili.com/video/BV17b411X7M8",
+    "ch14:v141": "https://www.bilibili.com/video/BV1C5411w7vq",
+    "ch14:v142": "https://www.bilibili.com/video/BV1Au4m1g7aA",
+    "ch15:v151": "https://www.bilibili.com/video/BV1DD4y1r7uT",
+    "ch15:v152": "https://www.bilibili.com/video/BV1DD4y1r7uT",
+    "ch16:v161": "https://www.bilibili.com/video/BV1t4411t7v6",
+    "ch16:v162": "https://www.bilibili.com/video/BV1gb411E7C8"
   };
 
   function getUsers() {
@@ -502,7 +502,8 @@
     });
 
     backBtn.addEventListener("click", () => {
-      if (document.fullscreenElement) document.exitFullscreen();
+      const wrap = document.getElementById("videosPlayerFullscreenWrap");
+      if (wrap && window.BiliFullscreen) window.BiliFullscreen.exit(wrap);
       iframe.src = "about:blank";
       listSection.classList.remove("hidden");
       playerSection.classList.add("hidden");
@@ -1029,28 +1030,33 @@
   const videoModalFullscreenBtn = document.getElementById("videoModalFullscreenBtn");
   if (videoModal && videoModalClose) {
     videoModalClose.addEventListener("click", () => {
-      if (document.fullscreenElement) document.exitFullscreen();
+      if (window.BiliFullscreen && videoModalFullscreenWrap) {
+        window.BiliFullscreen.exit(videoModalFullscreenWrap, videoModalFullscreenBtn);
+      }
       if (videoModalPlayer) videoModalPlayer.innerHTML = '<span class="video-player-placeholder">加载中...</span>';
       videoModal.classList.add("hidden");
     });
     videoModal.addEventListener("click", (e) => {
       if (e.target === videoModal) {
-        if (document.fullscreenElement) document.exitFullscreen();
+        if (window.BiliFullscreen && videoModalFullscreenWrap) {
+          window.BiliFullscreen.exit(videoModalFullscreenWrap, videoModalFullscreenBtn);
+        }
         if (videoModalPlayer) videoModalPlayer.innerHTML = '<span class="video-player-placeholder">加载中...</span>';
         videoModal.classList.add("hidden");
       }
     });
   }
   if (videoModalFullscreenWrap && videoModalFullscreenBtn) {
+    videoModalFullscreenBtn.setAttribute("data-bili-fullscreen-btn", "1");
     videoModalFullscreenBtn.addEventListener("click", () => {
-      if (!document.fullscreenElement) {
-        videoModalFullscreenWrap.requestFullscreen().then(() => { videoModalFullscreenBtn.textContent = "退出全屏"; }).catch(() => {});
-      } else {
-        document.exitFullscreen().then(() => { videoModalFullscreenBtn.textContent = "全屏"; });
+      if (window.BiliFullscreen) {
+        window.BiliFullscreen.toggle(videoModalFullscreenWrap, videoModalFullscreenBtn);
       }
     });
     document.addEventListener("fullscreenchange", () => {
-      if (!document.fullscreenElement && videoModalFullscreenBtn) videoModalFullscreenBtn.textContent = "全屏";
+      if (!document.fullscreenElement && !videoModalFullscreenWrap.classList.contains("bili-overlay-active") && videoModalFullscreenBtn) {
+        videoModalFullscreenBtn.textContent = "全屏";
+      }
     });
   }
 

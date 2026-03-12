@@ -484,6 +484,79 @@ main.container > section + section {
   padding: 16px;
 }
 
+/* ========== 移动端网页内全屏覆盖层（安卓/iOS 兼容） ========== */
+.bili-overlay-body {
+  overflow: hidden !important;
+}
+
+.bili-overlay-fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  width: 100dvw !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  height: 100svh !important;
+  min-height: -webkit-fill-available !important;
+  z-index: 99999 !important;
+  background: #000 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.bili-overlay-fullscreen .video-modal-player-wrap,
+.bili-overlay-fullscreen .bili-player-wrap {
+  flex: 1 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  aspect-ratio: 16/9 !important;
+  max-height: 100% !important;
+}
+
+.bili-overlay-fullscreen .bili-player-inline,
+.bili-overlay-fullscreen .bili-player {
+  width: 100% !important;
+  height: 100% !important;
+  border: none !important;
+}
+
+.bili-overlay-fullscreen .video-modal-close,
+.bili-overlay-fullscreen .video-modal-fullscreen-btn,
+.bili-overlay-fullscreen .videos-back-btn,
+.bili-overlay-fullscreen .videos-fullscreen-hint {
+  position: absolute !important;
+  z-index: 100000 !important;
+}
+
+.bili-overlay-fullscreen .video-modal-close {
+  top: max(12px, env(safe-area-inset-top)) !important;
+  right: max(16px, env(safe-area-inset-right)) !important;
+  color: #fff !important;
+  font-size: 32px !important;
+  background: rgba(0,0,0,0.5) !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.bili-overlay-fullscreen .video-modal-fullscreen-btn {
+  bottom: 20px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+}
+
 .video-player-placeholder {
   aspect-ratio: 16/9;
   background: #e2e8f0;
@@ -701,6 +774,30 @@ main.container > section + section {
 .videos-player-fullscreen-wrap:-webkit-full-screen .bili-player {
   width: 100%;
   height: 100%;
+}
+
+/* 覆盖层全屏时 videos 页的播放器布局 */
+.bili-overlay-fullscreen.videos-player-fullscreen-wrap .videos-player-row {
+  flex: 1 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  flex-direction: column !important;
+}
+
+.bili-overlay-fullscreen.videos-player-fullscreen-wrap .bili-player-wrap {
+  flex: 1 !important;
+  width: 100% !important;
+  min-height: 0 !important;
+}
+
+.bili-overlay-fullscreen.videos-player-fullscreen-wrap .videos-player-side {
+  position: absolute !important;
+  bottom: 16px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  flex-direction: row !important;
+  gap: 12px !important;
+  z-index: 100000 !important;
 }
 
 .bili-player-wrap {

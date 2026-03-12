@@ -54,27 +54,21 @@
     <a href="profile.html">我的</a>
   </nav>
 
+  <script src="bili-fullscreen.js"></script>
   <script src="script.js"></script>
   <script>
     (function() {
       const wrap = document.getElementById("videosPlayerFullscreenWrap");
       const fullscreenBtn = document.getElementById("videosFullscreenBtn");
       if (!wrap || !fullscreenBtn) return;
+      fullscreenBtn.setAttribute("data-bili-fullscreen-btn", "1");
       fullscreenBtn.addEventListener("click", function() {
-        if (!document.fullscreenElement) {
-          wrap.requestFullscreen().then(function() {
-            fullscreenBtn.textContent = "退出全屏";
-          }).catch(function() {
-            fullscreenBtn.textContent = "全屏";
-          });
-        } else {
-          document.exitFullscreen().then(function() {
-            fullscreenBtn.textContent = "全屏";
-          });
-        }
+        window.BiliFullscreen.toggle(wrap, fullscreenBtn);
       });
       document.addEventListener("fullscreenchange", function() {
-        if (!document.fullscreenElement) fullscreenBtn.textContent = "全屏";
+        if (!document.fullscreenElement && !wrap.classList.contains("bili-overlay-active")) {
+          fullscreenBtn.textContent = "全屏";
+        }
       });
     })();
   </script>
