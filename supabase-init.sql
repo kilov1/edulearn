@@ -1,13 +1,14 @@
 -- ============================================
--- EduLearn Supabase 完整初始化脚本
--- 在 Supabase Dashboard → SQL Editor 中执行
+-- EduLearn Supabase 初始化 - 请分 3 次执行
+-- 每次只复制一个「部分」到 SQL Editor，点 Run
 -- ============================================
 
--- 1. 检查并创建 user_info 表
--- 若表不存在则创建；若存在则添加缺失列
+-- ##############################################
+-- 【部分 1】先执行这段，点 Run
+-- ##############################################
+
 DO $$
 BEGIN
-  -- 创建表（若不存在）
   IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'user_info') THEN
     CREATE TABLE public.user_info (
       id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -16,53 +17,28 @@ BEGIN
       created_at timestamptz DEFAULT now()
     );
     RAISE NOTICE '已创建 user_info 表';
-  ELSE
-    RAISE NOTICE 'user_info 表已存在';
-    -- 添加可能缺失的列
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'user_info' AND column_name = 'nickname') THEN
-      ALTER TABLE public.user_info ADD COLUMN nickname text;
-      RAISE NOTICE '已添加 nickname 列';
-    END IF;
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'user_info' AND column_name = 'email') THEN
-      ALTER TABLE public.user_info ADD COLUMN email text;
-      RAISE NOTICE '已添加 email 列';
-    END IF;
+    RETURN;
   END IF;
-END $$;
 
--- 2. 若之前有 username 列，将数据迁移到 nickname 后删除
-DO $$
-BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'user_info' AND column_name = 'email') THEN
+    ALTER TABLE public.user_info ADD COLUMN email text;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'user_info' AND column_name = 'nickname') THEN
+    ALTER TABLE public.user_info ADD COLUMN nickname text;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'user_info' AND column_name = 'created_at') THEN
+    ALTER TABLE public.user_info ADD COLUMN created_at timestamptz DEFAULT now();
+  END IF;
+
   IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'user_info' AND column_name = 'username') THEN
     UPDATE public.user_info SET nickname = COALESCE(nickname, username) WHERE nickname IS NULL AND username IS NOT NULL;
+    UPDATE public.user_info ui SET email = au.email FROM auth.users au WHERE ui.id = au.id AND (ui.email IS NULL OR ui.email = '');
+    UPDATE public.user_info SET email = id::text WHERE email IS NULL OR email = '';
+    ALTER TABLE public.user_info ALTER COLUMN username DROP NOT NULL;
     ALTER TABLE public.user_info DROP COLUMN username;
-    RAISE NOTICE '已从 username 迁移到 nickname 并删除 username 列';
   END IF;
+
+  UPDATE public.user_info SET email = id::text WHERE email IS NULL OR email = '';
+  ALTER TABLE public.user_info ALTER COLUMN email SET NOT NULL;
 END $$;
 
--- 3. 启用 RLS
-ALTER TABLE public.user_info ENABLE ROW LEVEL SECURITY;
-
--- 4. 删除旧策略（避免重复创建报错）
-DROP POLICY IF EXISTS "允许读取 user_info" ON public.user_info;
-DROP POLICY IF EXISTS "允许插入自己的 user_info" ON public.user_info;
-DROP POLICY IF EXISTS "允许更新自己的 user_info" ON public.user_info;
-
--- 5. 创建 RLS 策略
-CREATE POLICY "允许读取 user_info"
-  ON public.user_info FOR SELECT
-  USING (true);
-
-CREATE POLICY "允许插入自己的 user_info"
-  ON public.user_info FOR INSERT
-  WITH CHECK (auth.uid() = id);
-
-CREATE POLICY "允许更新自己的 user_info"
-  ON public.user_info FOR UPDATE
-  USING (auth.uid() = id);
-
--- 6. 查看当前表结构（执行后可在 Messages 中查看）
-SELECT column_name, data_type, is_nullable
-FROM information_schema.columns
-WHERE table_schema = 'public' AND table_name = 'user_info'
-ORDER BY ordinal_position;
