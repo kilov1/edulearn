@@ -105,13 +105,20 @@ CREATE POLICY "允许更新自己的 user_info" ON public.user_info FOR UPDATE U
 
 ---
 
-## 五、配置邮箱找回密码重定向
+## 五、部署忘记密码 Edge Function（必做）
 
-1. **Authentication** → **URL Configuration**
-2. **Site URL**：`http://localhost:3000`（或你的实际地址）
-3. **Redirect URLs** 中添加：
-   - `http://localhost:3000/reset-password.html`
-   - 若有线上环境：`https://你的域名/reset-password.html`
+忘记密码功能改为**无需邮箱链接**，直接输入邮箱后设置新密码。需部署 Edge Function：
+
+1. 安装 [Supabase CLI](https://supabase.com/docs/guides/cli)
+2. 在项目根目录执行：
+   ```bash
+   supabase login
+   supabase link --project-ref 你的项目ID
+   supabase functions deploy reset-password
+   ```
+3. 项目 ID 可在 Supabase Dashboard → Project Settings → General 中查看
+
+若未部署该函数，忘记密码页面会提示「请求失败」。
 
 ---
 
@@ -121,5 +128,5 @@ CREATE POLICY "允许更新自己的 user_info" ON public.user_info FOR UPDATE U
 |----------|----------------------------------------------------------------------|
 | 注册     | 邮箱 + 密码 → 注册成功 → 跳转首页 → **首次弹窗设置昵称**              |
 | 登录     | 邮箱 + 密码 → 直接进入首页（无弹窗）                                  |
-| 忘记密码 | 输入邮箱 → 收到重置链接 → 设置新密码                                  |
+| 忘记密码 | 输入邮箱 → 设置新密码（两次输入 + 强度提示）→ 跳转登录页               |
 | 个人中心 | 可修改昵称，昵称会同步到 Supabase `user_info.nickname`               |
