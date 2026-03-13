@@ -15,14 +15,15 @@
     localStorage.setItem(USERS_KEY, JSON.stringify(list));
   }
 
-  function ensureUserInStorage(email, nickname) {
+  function ensureUserInStorage(email, nickname, avatarColor) {
     const users = getUsers();
     const emailLower = (email || "").toLowerCase();
     let user = users.find((u) => (u.email || "").toLowerCase() === emailLower);
     if (!user) {
+      const savedAvatar = sessionStorage.getItem("edu_register_avatar");
       user = {
         email: emailLower,
-        avatarColor: AVATAR_COLORS[0],
+        avatarColor: avatarColor || savedAvatar || AVATAR_COLORS[0],
         profile: { nickname: nickname || emailLower.split("@")[0] || "用户", realName: "", school: "", birthday: "", gender: "未填写" },
         stats: { totalMinutes: 0, wrongCount: 0 },
         progress: { videosWatched: [], booksRead: [], quizTotal: 0, quizCorrect: 0, homeworkScore: 0 },
@@ -31,9 +32,10 @@
       };
       users.push(user);
       setUsers(users);
-    } else if (nickname) {
-      user.profile.nickname = nickname;
-      setUsers(users);
+    } else {
+      if (nickname) user.profile.nickname = nickname;
+      if (avatarColor) user.avatarColor = avatarColor;
+      if (nickname || avatarColor) setUsers(users);
     }
     return user;
   }
@@ -1119,7 +1121,8 @@
       localStorage.setItem(CURRENT_KEY, email);
       const { data: userInfo } = await sb.from("user_info").select("nickname").eq("id", session.user.id).maybeSingle();
       const nickname = userInfo?.nickname || null;
-      ensureUserInStorage(email, nickname);
+      const regAvatar = sessionStorage.getItem("edu_register_avatar");
+      ensureUserInStorage(email, nickname, regAvatar || undefined);
       if (nickname) {
         updateCurrentUser((x) => { x.profile.nickname = nickname; });
       }
@@ -1141,9 +1144,15 @@
                 console.error("Update nickname error:", error);
                 return;
               }
-              ensureUserInStorage(email, val);
-              updateCurrentUser((x) => { x.profile.nickname = val; });
+              const savedAvatar = sessionStorage.getItem("edu_register_avatar");
+              sessionStorage.removeItem("edu_register_avatar");
+              ensureUserInStorage(email, val, savedAvatar);
+              updateCurrentUser((x) => {
+                x.profile.nickname = val;
+                if (savedAvatar) x.avatarColor = savedAvatar;
+              });
               sessionStorage.removeItem("edu_show_nickname_popup");
+              sessionStorage.removeItem("edu_register_avatar");
               modal.classList.add("hidden");
               setupHeader();
             };

@@ -12,6 +12,25 @@
   const confirmCheck = document.getElementById("confirmCheck");
   const strengthBar = document.getElementById("strengthBar");
   const strengthText = document.getElementById("strengthText");
+  const avatarOptions = document.getElementById("avatarOptions");
+  const avatarValue = document.getElementById("avatarValue");
+
+  function renderAvatarOptions() {
+    if (!avatarOptions || !avatarValue) return;
+    avatarOptions.innerHTML = "";
+    AVATAR_COLORS.forEach((color, idx) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = `avatar-option${idx === 0 ? " active" : ""}`;
+      btn.style.background = color;
+      btn.addEventListener("click", () => {
+        avatarOptions.querySelectorAll(".avatar-option").forEach((el) => el.classList.remove("active"));
+        btn.classList.add("active");
+        avatarValue.value = color;
+      });
+      avatarOptions.appendChild(btn);
+    });
+  }
 
   async function getSupabase() {
     if (window.supabaseClient) return window.supabaseClient;
@@ -47,8 +66,10 @@
     message.className = ok ? "msg ok" : "msg error";
   }
 
-  // 注册：邮箱 + 密码
+  // 注册：邮箱 + 密码 + 头像
   if (registerForm) {
+    renderAvatarOptions();
+
     if (emailCheck && emailInput) {
       emailInput.addEventListener("input", () => {
         const val = emailInput.value.trim();
@@ -119,7 +140,12 @@
 
         if (authError) {
           console.error("Auth signUp error:", authError);
-          showMessage(authError.message || "注册失败，请重试", false);
+          const msg = (authError.message || "").toLowerCase();
+          if (msg.includes("already registered") || msg.includes("already exists")) {
+            showMessage("该邮箱已被注册，请直接登录或使用忘记密码", false);
+          } else {
+            showMessage(authError.message || "注册失败，请重试", false);
+          }
           return;
         }
 
@@ -138,12 +164,13 @@
         }
         if (insertError) {
           console.error("Insert user_info error:", insertError);
-          showMessage("注册成功但保存信息失败，请刷新后重试", false);
+          showMessage("注册成功但保存信息失败，请直接登录或联系管理员", false);
           return;
         }
 
         localStorage.setItem(CURRENT_KEY, emailLower);
         sessionStorage.setItem("edu_show_nickname_popup", "1");
+        sessionStorage.setItem("edu_register_avatar", avatarValue?.value || AVATAR_COLORS[0]);
         showMessage("注册成功，正在跳转...", true);
         setTimeout(() => {
           window.location.href = "index.html";
