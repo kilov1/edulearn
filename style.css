@@ -26,6 +26,15 @@ body {
     linear-gradient(180deg, var(--bg), var(--bg-2));
 }
 
+@keyframes page-fade-in {
+  from { opacity: 0.97; }
+  to { opacity: 1; }
+}
+
+body {
+  animation: page-fade-in 0.25s ease-out;
+}
+
 a {
   color: inherit;
 }
@@ -54,6 +63,11 @@ a {
 .brand-wrap {
   display: grid;
   gap: 6px;
+  align-content: start;
+}
+
+.brand-wrap .back-btn {
+  margin-top: 4px;
 }
 
 .brand-line {
@@ -279,6 +293,11 @@ main.container > section + section {
   box-shadow: 0 14px 24px rgba(37, 99, 235, 0.34);
 }
 
+.btn.primary:active,
+.btn.ghost:active {
+  transform: scale(0.98);
+}
+
 .btn.ghost {
   color: #34557f;
   background: #eef5ff;
@@ -322,11 +341,16 @@ main.container > section + section {
   color: #2a4f83;
   background: #eef5ff;
   border: 1px solid #cfe0f7;
-  transition: background 0.2s;
+  transition: background 0.2s, transform 0.15s;
+  display: inline-block;
 }
 
 .back-btn:hover {
   background: #e2efff;
+}
+
+.back-btn:active {
+  transform: scale(0.97);
 }
 
 .feature-grid {
@@ -343,10 +367,15 @@ main.container > section + section {
   text-decoration: none;
   border: 1px solid #d2e5fb;
   box-shadow: 0 12px 24px rgba(74, 130, 202, 0.14);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .feature-card:hover {
   transform: translateY(-2px);
+}
+
+.feature-card:active {
+  transform: translateY(0) scale(0.99);
 }
 
 .feature-card h2 {
@@ -1324,11 +1353,16 @@ label {
   text-decoration: none;
   font-weight: 700;
   letter-spacing: 0.3px;
+  transition: color 0.2s, background 0.2s, transform 0.15s;
 }
 
 .bottom-nav a.active {
   color: #2263d8;
   background: #eef5ff;
+}
+
+.bottom-nav a:active {
+  transform: scale(0.96);
 }
 
 @media (max-width: 768px) {
