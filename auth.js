@@ -5,17 +5,13 @@
   const loginForm = document.getElementById("loginForm");
   const registerForm = document.getElementById("registerForm");
   const message = document.getElementById("message");
-  const usernameInput = document.getElementById("username");
   const emailInput = document.getElementById("email");
   const passwordInput = document.getElementById("password");
   const confirmInput = document.getElementById("confirmPassword");
-  const usernameCheck = document.getElementById("usernameCheck");
   const emailCheck = document.getElementById("emailCheck");
   const confirmCheck = document.getElementById("confirmCheck");
   const strengthBar = document.getElementById("strengthBar");
   const strengthText = document.getElementById("strengthText");
-  const avatarOptions = document.getElementById("avatarOptions");
-  const avatarValue = document.getElementById("avatarValue");
 
   async function getSupabase() {
     if (window.supabaseClient) return window.supabaseClient;
@@ -29,17 +25,6 @@
   function isValidEmail(email) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   }
-
-  // 已禁用自动跳转
-  // async function checkSessionAndRedirect() {
-  //   const sb = getSupabase();
-  //   if (!sb) return;
-  //   const { data: { session } } = await sb.auth.getSession();
-  //   if (session) {
-  //     window.location.href = "index.html";
-  //   }
-  // }
-  // checkSessionAndRedirect();
 
   function validPassword(pwd) {
     return /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,16}$/.test(pwd);
@@ -62,41 +47,9 @@
     message.className = ok ? "msg ok" : "msg error";
   }
 
-  function renderAvatarOptions() {
-    if (!avatarOptions) return;
-    avatarOptions.innerHTML = "";
-    AVATAR_COLORS.forEach((color, idx) => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = `avatar-option${idx === 0 ? " active" : ""}`;
-      btn.style.background = color;
-      btn.addEventListener("click", () => {
-        avatarOptions.querySelectorAll(".avatar-option").forEach((el) => el.classList.remove("active"));
-        btn.classList.add("active");
-        avatarValue.value = color;
-      });
-      avatarOptions.appendChild(btn);
-    });
-  }
-
-  // 注册表单处理
+  // 注册：邮箱 + 密码
   if (registerForm) {
-    renderAvatarOptions();
-
-    if (usernameCheck) {
-      usernameInput.addEventListener("input", () => {
-        const val = usernameInput.value.trim();
-        if (!val || val.length < 3 || val.length > 32) {
-          usernameCheck.textContent = "请输入 3~32 位用户名";
-          usernameCheck.className = "hint";
-          return;
-        }
-        usernameCheck.textContent = "用户名已填写";
-        usernameCheck.className = "hint ok";
-      });
-    }
-
-    if (emailCheck) {
+    if (emailCheck && emailInput) {
       emailInput.addEventListener("input", () => {
         const val = emailInput.value.trim();
         if (!val || !isValidEmail(val)) {
@@ -109,36 +62,34 @@
       });
     }
 
-    passwordInput.addEventListener("input", () => {
-      const state = getStrength(passwordInput.value);
-      strengthBar.style.width = `${state.width}%`;
-      strengthBar.style.background = state.color;
-      strengthText.textContent = `密码强度：${state.text}`;
-      strengthText.className = validPassword(passwordInput.value) ? "hint ok" : "hint bad";
-    });
+    if (passwordInput && strengthBar && strengthText) {
+      passwordInput.addEventListener("input", () => {
+        const state = getStrength(passwordInput.value);
+        strengthBar.style.width = `${state.width}%`;
+        strengthBar.style.background = state.color;
+        strengthText.textContent = `密码强度：${state.text}`;
+        strengthText.className = validPassword(passwordInput.value) ? "hint ok" : "hint bad";
+      });
+    }
 
-    confirmInput.addEventListener("input", () => {
-      if (confirmInput.value === passwordInput.value) {
-        confirmCheck.textContent = "两次密码一致";
-        confirmCheck.className = "hint ok";
-      } else {
-        confirmCheck.textContent = "两次密码不一致";
-        confirmCheck.className = "hint bad";
-      }
-    });
+    if (confirmInput && confirmCheck) {
+      confirmInput.addEventListener("input", () => {
+        if (confirmInput.value === passwordInput.value) {
+          confirmCheck.textContent = "两次密码一致";
+          confirmCheck.className = "hint ok";
+        } else {
+          confirmCheck.textContent = "两次密码不一致";
+          confirmCheck.className = "hint bad";
+        }
+      });
+    }
 
     registerForm.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const username = usernameInput.value.trim();
       const email = emailInput.value.trim();
       const password = passwordInput.value;
       const confirm = confirmInput.value;
 
-      // 验证输入
-      if (!username || username.length < 3 || username.length > 32) {
-        showMessage("用户名需 3~32 位", false);
-        return;
-      }
       if (!isValidEmail(email)) {
         showMessage("请输入有效的邮箱地址", false);
         return;
@@ -159,54 +110,44 @@
       }
 
       try {
-        // 1. 调用 supabase.auth.signUp 注册，传入 username 到 user_metadata（Supabase 控制台可显示）
+        const emailLower = email.toLowerCase();
         const { data, error: authError } = await sb.auth.signUp({
-          email,
+          email: emailLower,
           password,
-          options: {
-            data: {
-              full_name: username,
-              display_name: username,
-              username
-            }
-          }
+          options: { data: { email: emailLower } }
         });
 
         if (authError) {
           console.error("Auth signUp error:", authError);
-          showMessage("注册失败，请重试", false);
+          showMessage(authError.message || "注册失败，请重试", false);
           return;
         }
 
         if (!data.user || !data.user.id) {
-          console.error("No user ID returned from signUp");
           showMessage("注册失败，请重试", false);
           return;
         }
 
         const userId = data.user.id;
-        console.log("User registered successfully, ID:", userId);
-
-        // 2. 往 user_info 插入 id、username、email（邮箱存小写，与 Supabase auth 一致）
-        const emailLower = email.toLowerCase();
         let insertError = null;
         for (let attempt = 0; attempt < 2; attempt++) {
-          const res = await sb.from("user_info").insert([{ id: userId, username, email: emailLower }]);
+          const res = await sb.from("user_info").insert([{ id: userId, email: emailLower, nickname: null }]);
           insertError = res.error;
           if (!insertError) break;
           if (attempt === 0) await new Promise((r) => setTimeout(r, 300));
         }
         if (insertError) {
           console.error("Insert user_info error:", insertError);
-          showMessage("注册成功但保存用户信息失败，请刷新后重试登录", false);
+          showMessage("注册成功但保存信息失败，请刷新后重试", false);
           return;
         }
 
-        // 注册成功后跳转到登录页
-        showMessage("注册成功，请登录", true);
+        localStorage.setItem(CURRENT_KEY, emailLower);
+        sessionStorage.setItem("edu_show_nickname_popup", "1");
+        showMessage("注册成功，正在跳转...", true);
         setTimeout(() => {
-          window.location.href = "login.html";
-        }, 800);
+          window.location.href = "index.html";
+        }, 600);
       } catch (err) {
         console.error("Registration error:", err);
         showMessage("注册失败，请重试", false);
@@ -214,15 +155,15 @@
     });
   }
 
-  // 登录：支持用户名+密码，或邮箱+密码（邮箱仅用于找回密码，但也可直接登录）
+  // 登录：邮箱 + 密码
   if (loginForm) {
     loginForm.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const input = loginForm.username.value.trim();
+      const email = (loginForm.email?.value || "").trim().toLowerCase();
       const password = loginForm.password.value;
 
-      if (!input) {
-        showMessage("请输入用户名或邮箱", false);
+      if (!email || !isValidEmail(email)) {
+        showMessage("请输入有效的邮箱地址", false);
         return;
       }
 
@@ -232,36 +173,14 @@
         return;
       }
 
-      let email, username;
-
-      if (isValidEmail(input)) {
-        // 输入的是邮箱，直接登录（Supabase auth 使用小写）
-        email = input.toLowerCase();
-        const { data: u } = await sb.from("user_info").select("username").ilike("email", email).limit(1).maybeSingle();
-        username = u?.username || email.split("@")[0];
-      } else {
-        // 输入的是用户名，从 user_info 查邮箱（先精确匹配，再大小写不敏感）
-        let userData = (await sb.from("user_info").select("email, username").eq("username", input).maybeSingle()).data;
-        if (!userData) {
-          userData = (await sb.from("user_info").select("email, username").ilike("username", input).limit(1).maybeSingle()).data;
-        }
-        if (!userData) {
-          showMessage("用户名不存在", false);
-          return;
-        }
-        email = (userData.email || "").toLowerCase();
-        username = userData.username;
-      }
-
       const { error: authError } = await sb.auth.signInWithPassword({ email, password });
 
       if (authError) {
-        console.warn("signInWithPassword error:", authError.message, "email:", email);
-        showMessage("用户名/邮箱或密码错误", false);
+        showMessage("邮箱或密码错误", false);
         return;
       }
 
-      localStorage.setItem(CURRENT_KEY, username);
+      localStorage.setItem(CURRENT_KEY, email);
       showMessage("登录成功，正在跳转...", true);
       setTimeout(() => {
         window.location.replace("index.html");

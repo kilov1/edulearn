@@ -58,6 +58,19 @@
     <a href="profile.html">我的</a>
   </nav>
 
+  <!-- 首次注册昵称弹窗（仅注册后首次进入时显示） -->
+  <div id="nicknameModal" class="nickname-modal hidden">
+    <div class="nickname-modal-backdrop"></div>
+    <div class="nickname-modal-content">
+      <h2 class="nickname-modal-title">现在让我们开始吧</h2>
+      <p class="nickname-modal-subtitle">请输入您的昵称</p>
+      <form id="nicknameModalForm">
+        <input id="nicknameModalInput" type="text" maxlength="24" placeholder="昵称" required />
+        <button type="submit">确定</button>
+      </form>
+    </div>
+  </div>
+
   <script src="supabase-loader.js"></script>
   <script src="supabase-config.js"></script>
   <script src="route-guard.js"></script>

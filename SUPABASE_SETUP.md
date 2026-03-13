@@ -1,87 +1,123 @@
-# Supabase 配置说明
+# Supabase 配置说明（邮箱主账号 + 昵称）
 
-本项目的认证流程：**邮箱无需验证**，填写即可注册；**找回密码**通过注册时填写的邮箱验证后重置。
-
----
-
-## 一、关闭邮箱验证（重要）
-
-1. 登录 [Supabase Dashboard](https://supabase.com/dashboard)
-2. 选择你的项目
-3. 左侧菜单 **Authentication** → **Providers** → **Email**
-4. 找到 **Confirm email**，**关闭**此选项
-5. 点击 **Save**
-
-这样用户注册后无需点击邮件验证链接，填写邮箱即可完成注册并登录。
+本系统采用**邮箱作为主账号**：注册、登录、找回密码均使用邮箱。昵称在首次注册后弹窗设置，并保存在 Supabase。
 
 ---
 
-## 二、创建 user_info 表
+## 一、一键初始化（推荐）
 
-1. 左侧菜单 **SQL Editor** → **New query**
-2. 粘贴并执行以下 SQL：
+在 Supabase Dashboard → **SQL Editor** → **New query** 中，复制粘贴并执行项目根目录下的 **`supabase-init.sql`** 文件全部内容。
+
+该脚本会：
+- 检查 `user_info` 表是否存在，不存在则创建
+- 若表已存在，则添加缺失的 `nickname`、`email` 列
+- 若有旧的 `username` 列，会迁移到 `nickname` 后删除
+- 配置 RLS 策略
+- 执行结束后显示当前表结构
+
+---
+
+## 二、手动修改 user_info 表结构（可选）
+
+在 **SQL Editor** 中执行以下 SQL，将表结构改为 `id, email, nickname`：
 
 ```sql
--- 创建 user_info 表（与 auth.users 关联）
-create table if not exists public.user_info (
-  id uuid primary key references auth.users(id) on delete cascade,
-  username text not null unique,
-  email text not null,
-  created_at timestamptz default now()
-);
+-- 若已有 user_info 表，先备份并修改结构
+-- 添加 nickname 列（若不存在）
+ALTER TABLE public.user_info ADD COLUMN IF NOT EXISTS nickname text;
+
+-- 若之前有 username 列，可将 nickname 从 username 迁移后删除 username
+-- UPDATE public.user_info SET nickname = username WHERE nickname IS NULL AND username IS NOT NULL;
+-- ALTER TABLE public.user_info DROP COLUMN IF EXISTS username;
+
+-- 确保 email 列存在且唯一
+-- ALTER TABLE public.user_info ADD CONSTRAINT user_info_email_unique UNIQUE (email);  -- 若需要
+
+-- 删除旧策略
+DROP POLICY IF EXISTS "允许读取 user_info" ON public.user_info;
+DROP POLICY IF EXISTS "允许插入自己的 user_info" ON public.user_info;
+DROP POLICY IF EXISTS "允许更新自己的 user_info" ON public.user_info;
 
 -- 启用 RLS
-alter table public.user_info enable row level security;
+ALTER TABLE public.user_info ENABLE ROW LEVEL SECURITY;
 
--- 若之前已创建过策略，先删除再重建（可安全重复执行）
-drop policy if exists "允许读取 user_info" on public.user_info;
-drop policy if exists "允许插入自己的 user_info" on public.user_info;
-drop policy if exists "允许更新自己的 user_info" on public.user_info;
-
--- 允许所有人读取（登录时需查 username/email）
-create policy "允许读取 user_info"
-  on public.user_info for select
-  using (true);
+-- 允许所有人读取（登录、展示用）
+CREATE POLICY "允许读取 user_info"
+  ON public.user_info FOR SELECT
+  USING (true);
 
 -- 允许已登录用户插入自己的记录（注册时）
-create policy "允许插入自己的 user_info"
-  on public.user_info for insert
-  with check (auth.uid() = id);
+CREATE POLICY "允许插入自己的 user_info"
+  ON public.user_info FOR INSERT
+  WITH CHECK (auth.uid() = id);
 
--- 允许用户更新自己的记录
-create policy "允许更新自己的 user_info"
-  on public.user_info for update
-  using (auth.uid() = id);
+-- 允许用户更新自己的记录（修改昵称等）
+CREATE POLICY "允许更新自己的 user_info"
+  ON public.user_info FOR UPDATE
+  USING (auth.uid() = id);
+```
+
+**若需从零创建 user_info 表：**
+
+```sql
+CREATE TABLE IF NOT EXISTS public.user_info (
+  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email text NOT NULL,
+  nickname text,
+  created_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE public.user_info ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "允许读取 user_info" ON public.user_info;
+DROP POLICY IF EXISTS "允许插入自己的 user_info" ON public.user_info;
+DROP POLICY IF EXISTS "允许更新自己的 user_info" ON public.user_info;
+
+CREATE POLICY "允许读取 user_info" ON public.user_info FOR SELECT USING (true);
+CREATE POLICY "允许插入自己的 user_info" ON public.user_info FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "允许更新自己的 user_info" ON public.user_info FOR UPDATE USING (auth.uid() = id);
 ```
 
 ---
 
-## 三、配置忘记密码重定向地址
+## 三、如何查看 Supabase 中是否有 user_info 表
 
-1. 左侧菜单 **Authentication** → **URL Configuration**
-2. **Site URL**：填写你的站点地址，例如：
-   - 本地开发：`http://localhost:3000`
-   - 线上：`https://你的域名.com`
-3. **Redirect URLs** 中添加（点击 Add URL）：
-   - `http://localhost:3000/reset-password.html`
-   - 若有线上环境：`https://你的域名/reset-password.html`
-4. 点击 **Save**
-
----
-
-## 四、邮箱发送配置（找回密码需发邮件）
-
-Supabase 默认使用内置邮件服务，有发送限制。若需稳定使用找回密码功能，建议：
-
-1. **Authentication** → **Email Templates** 中可自定义邮件模板
-2. 或配置 **SMTP**：**Project Settings** → **Auth** → **SMTP Settings**，填入你的 SMTP 信息
+1. 登录 [Supabase Dashboard](https://supabase.com/dashboard)
+2. 选择你的项目
+3. 左侧菜单 **Table Editor** → 查看是否有 `user_info` 表
+4. 或在 **SQL Editor** 中执行：
+   ```sql
+   SELECT EXISTS (
+     SELECT 1 FROM information_schema.tables
+     WHERE table_schema = 'public' AND table_name = 'user_info'
+   );
+   ```
+   - 返回 `true` 表示表存在
+   - 返回 `false` 表示表不存在，可执行 `supabase-init.sql` 创建
 
 ---
 
-## 五、流程说明
+## 四、关闭邮箱验证
+
+1. **Authentication** → **Providers** → **Email**
+2. 关闭 **Confirm email**
+3. 保存
+
+---
+
+## 五、配置忘记密码重定向
+
+1. **Authentication** → **URL Configuration**
+2. **Site URL**：`http://localhost:3000`（或你的实际地址）
+3. **Redirect URLs** 中添加：`http://localhost:3000/reset-password.html`
+
+---
+
+## 六、流程说明
 
 | 操作     | 说明                                                                 |
 |----------|----------------------------------------------------------------------|
-| 注册     | 填写用户名、邮箱、密码即可，邮箱会保存到 Supabase，无需验证         |
-| 登录     | 使用用户名或邮箱 + 密码登录                                          |
-| 忘记密码 | 输入注册时的邮箱，Supabase 仅对已注册邮箱发送重置链接，点击后设置新密码 |
+| 注册     | 邮箱 + 密码 → 注册成功 → 跳转首页 → **首次弹窗设置昵称**              |
+| 登录     | 邮箱 + 密码 → 直接进入首页（无弹窗）                                  |
+| 忘记密码 | 输入邮箱 → 收到重置链接 → 设置新密码                                  |
+| 个人中心 | 可修改昵称，昵称会同步到 Supabase `user_info.nickname`               |

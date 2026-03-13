@@ -1,13 +1,7 @@
 (() => {
   const USERS_KEY = "edu_users";
   const CURRENT_KEY = "edu_current_user";
-  const EMAIL_SUFFIX = "@edulearn.local";
   const AVATAR_COLORS = ["#4f46e5", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#9333ea", "#f43f5e", "#14b8a6"];
-
-  function emailToUsername(email) {
-    if (!email || !email.endsWith(EMAIL_SUFFIX)) return "";
-    return email.slice(0, -EMAIL_SUFFIX.length);
-  }
 
   function getUsers() {
     try {
@@ -21,21 +15,24 @@
     localStorage.setItem(USERS_KEY, JSON.stringify(list));
   }
 
-  function ensureUserInStorage(username) {
+  function ensureUserInStorage(email, nickname) {
     const users = getUsers();
-    let user = users.find((u) => u.username.toLowerCase() === (username || "").toLowerCase());
+    const emailLower = (email || "").toLowerCase();
+    let user = users.find((u) => (u.email || "").toLowerCase() === emailLower);
     if (!user) {
       user = {
-        username,
-        email: "",
+        email: emailLower,
         avatarColor: AVATAR_COLORS[0],
-        profile: { nickname: username, realName: "", school: "", birthday: "", gender: "未填写" },
+        profile: { nickname: nickname || emailLower.split("@")[0] || "用户", realName: "", school: "", birthday: "", gender: "未填写" },
         stats: { totalMinutes: 0, wrongCount: 0 },
         progress: { videosWatched: [], booksRead: [], quizTotal: 0, quizCorrect: 0, homeworkScore: 0 },
         wrongBook: [],
         subscribed: false
       };
       users.push(user);
+      setUsers(users);
+    } else if (nickname) {
+      user.profile.nickname = nickname;
       setUsers(users);
     }
     return user;
@@ -312,19 +309,19 @@
     localStorage.setItem(USERS_KEY, JSON.stringify(users));
   }
 
-  function currentUsername() {
+  function currentEmail() {
     return localStorage.getItem(CURRENT_KEY) || "";
   }
 
   function getCurrentUser() {
-    const username = currentUsername();
-    if (!username) return null;
-    return getUsers().find((u) => u.username.toLowerCase() === username.toLowerCase()) || null;
+    const email = currentEmail();
+    if (!email) return null;
+    return getUsers().find((u) => (u.email || "").toLowerCase() === email.toLowerCase()) || null;
   }
 
   function ensureUserShape(user) {
     if (!user.profile) user.profile = {};
-    user.profile.nickname = user.profile.nickname || user.username;
+    user.profile.nickname = user.profile.nickname || user.email?.split("@")[0] || "用户";
     user.profile.realName = user.profile.realName || "";
     user.profile.school = user.profile.school || "";
     user.profile.birthday = user.profile.birthday || "";
@@ -344,9 +341,9 @@
   }
 
   function updateCurrentUser(mutator) {
-    const username = currentUsername();
+    const email = currentEmail();
     const users = getUsers();
-    const idx = users.findIndex((u) => (u.username || "").toLowerCase() === (username || "").toLowerCase());
+    const idx = users.findIndex((u) => (u.email || "").toLowerCase() === (email || "").toLowerCase());
     if (idx < 0) return null;
     ensureUserShape(users[idx]);
     mutator(users[idx]);
@@ -392,8 +389,8 @@
   function getDisplayName(user) {
     if (!user) return "";
     ensureUserShape(user);
-    const val = user.profile.nickname || user.username;
-    return (val && val.includes("@")) ? user.username : (val || "用户");
+    const val = user.profile.nickname || user.email?.split("@")[0];
+    return (val && val.includes("@")) ? (user.email?.split("@")[0] || "用户") : (val || "用户");
   }
 
   function setupHeader() {
@@ -987,7 +984,7 @@
             <div class="avatar large" style="background:${user.avatarColor}"></div>
             <div>
               <div><strong>${getDisplayName(user)}</strong></div>
-              <div class="muted">用户名：${user.username}</div>
+              <div class="muted">邮箱：${user.email || ""}</div>
             </div>
           </div>
         </div>
@@ -997,12 +994,12 @@
         <p>性别：${user.profile.gender || "未填写"}</p>
       `;
 
-      profileForm.nickname.value = (user.profile.nickname && !user.profile.nickname.includes("@")) ? user.profile.nickname : (user.username || "");
+      profileForm.nickname.value = user.profile.nickname || "";
       profileForm.realName.value = user.profile.realName || "";
       profileForm.school.value = user.profile.school || "";
       profileForm.birthday.value = user.profile.birthday || "";
       profileForm.gender.value = user.profile.gender || "未填写";
-      profileForm.username.value = user.username || "";
+      profileForm.email.value = user.email || "";
       avatarValue.value = user.avatarColor;
       renderAvatarOptions(avatarOptions, avatarValue, user.avatarColor);
 
@@ -1019,39 +1016,24 @@
       profileForm.classList.toggle("hidden");
     });
 
-    profileForm.addEventListener("submit", (event) => {
+    profileForm.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const newUsername = profileForm.username?.value.trim();
+      const newNickname = profileForm.nickname?.value.trim();
       const currentUser = getCurrentUser();
-      
-      // 如果修改了用户名，需要检查唯一性
-      if (newUsername && newUsername !== currentUser.username) {
-        const users = getUsers();
-        if (users.some((u) => u.username.toLowerCase() === newUsername.toLowerCase())) {
-          profileMsg.textContent = "用户名已被使用，请选择其他名称。";
-          profileMsg.className = "muted error";
-          return;
+      updateCurrentUser((u) => {
+        u.profile.nickname = newNickname || u.email?.split("@")[0] || "用户";
+        u.profile.realName = profileForm.realName.value.trim();
+        u.profile.school = profileForm.school.value.trim();
+        u.profile.birthday = profileForm.birthday.value;
+        u.profile.gender = profileForm.gender.value;
+        u.avatarColor = avatarValue.value || AVATAR_COLORS[0];
+      });
+      const sb = window.supabaseClient;
+      if (sb && currentUser) {
+        const { data: { session } } = await sb.auth.getSession();
+        if (session) {
+          await sb.from("user_info").update({ nickname: newNickname || null }).eq("id", session.user.id);
         }
-        // 更新用户名
-        updateCurrentUser((u) => {
-          u.username = newUsername;
-          u.profile.nickname = profileForm.nickname.value.trim() || newUsername;
-          u.profile.realName = profileForm.realName.value.trim();
-          u.profile.school = profileForm.school.value.trim();
-          u.profile.birthday = profileForm.birthday.value;
-          u.profile.gender = profileForm.gender.value;
-          u.avatarColor = avatarValue.value || AVATAR_COLORS[0];
-        });
-        localStorage.setItem(CURRENT_KEY, newUsername);
-      } else {
-        updateCurrentUser((u) => {
-          u.profile.nickname = profileForm.nickname.value.trim() || u.username;
-          u.profile.realName = profileForm.realName.value.trim();
-          u.profile.school = profileForm.school.value.trim();
-          u.profile.birthday = profileForm.birthday.value;
-          u.profile.gender = profileForm.gender.value;
-          u.avatarColor = avatarValue.value || AVATAR_COLORS[0];
-        });
       }
       profileMsg.textContent = "资料更新成功。";
       profileMsg.className = "muted";
@@ -1133,19 +1115,43 @@
         window.location.href = "login.html";
         return;
       }
-      // 从 user_info 获取 username（Supabase 使用真实邮箱，非 @edulearn.local）
-      let username = "";
-      const { data: userInfo } = await sb.from("user_info").select("username").eq("id", session.user.id).single();
-      if (userInfo?.username) {
-        username = userInfo.username;
-      } else {
-        username = session.user.email?.split("@")[0] || "user";
+      const email = (session.user.email || "").toLowerCase();
+      localStorage.setItem(CURRENT_KEY, email);
+      const { data: userInfo } = await sb.from("user_info").select("nickname").eq("id", session.user.id).maybeSingle();
+      const nickname = userInfo?.nickname || null;
+      ensureUserInStorage(email, nickname);
+      if (nickname) {
+        updateCurrentUser((x) => { x.profile.nickname = nickname; });
       }
-      localStorage.setItem(CURRENT_KEY, username);
-      ensureUserInStorage(username);
-      updateCurrentUser((x) => {
-        if ((x.profile?.nickname || "").includes("@") || !x.profile?.nickname) x.profile.nickname = username;
-      });
+      if (page === "home") {
+        const showPopup = sessionStorage.getItem("edu_show_nickname_popup");
+        const needNickname = !nickname || !nickname.trim();
+        if (showPopup && needNickname) {
+          const modal = document.getElementById("nicknameModal");
+          const form = document.getElementById("nicknameModalForm");
+          const input = document.getElementById("nicknameModalInput");
+          if (modal && form && input) {
+            modal.classList.remove("hidden");
+            form.onsubmit = async (e) => {
+              e.preventDefault();
+              const val = input.value.trim();
+              if (!val) return;
+              const { error } = await sb.from("user_info").update({ nickname: val }).eq("id", session.user.id);
+              if (error) {
+                console.error("Update nickname error:", error);
+                return;
+              }
+              ensureUserInStorage(email, val);
+              updateCurrentUser((x) => { x.profile.nickname = val; });
+              sessionStorage.removeItem("edu_show_nickname_popup");
+              modal.classList.add("hidden");
+              setupHeader();
+            };
+          }
+        } else {
+          sessionStorage.removeItem("edu_show_nickname_popup");
+        }
+      }
     }
     if (!requireAuth()) return;
     wireBackButtons();

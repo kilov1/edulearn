@@ -13,15 +13,11 @@
       <h1 class="auth-brand">EduLearn</h1>
     </div>
     <h2>创建账号</h2>
-    <p>注册后即可开始使用所有学习模块。邮箱仅用于找回密码，无需验证。</p>
+    <p>使用邮箱注册，注册后可设置昵称。</p>
 
     <form id="registerForm">
-      <label for="username">用户名</label>
-      <input id="username" name="username" type="text" minlength="3" maxlength="32" required />
-      <div id="usernameCheck" class="hint">请输入 3~32 位用户名</div>
-
-      <label for="email">邮箱（用于找回密码，无需验证）</label>
-      <input id="email" name="email" type="email" required placeholder="用于找回密码" />
+      <label for="email">邮箱</label>
+      <input id="email" name="email" type="email" required placeholder="请输入邮箱" />
       <div id="emailCheck" class="hint">请输入有效的邮箱地址</div>
 
       <label for="password">密码</label>
@@ -34,10 +30,6 @@
       <label for="confirmPassword">重复密码</label>
       <input id="confirmPassword" name="confirmPassword" type="password" minlength="8" maxlength="16" required />
       <div id="confirmCheck" class="hint"></div>
-
-      <label>选择头像</label>
-      <div id="avatarOptions" class="avatar-grid"></div>
-      <input id="avatarValue" name="avatarValue" type="hidden" value="#4f46e5" />
 
       <button type="submit">注册</button>
     </form>

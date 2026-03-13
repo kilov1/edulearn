@@ -1111,6 +1111,68 @@ label {
   display: none;
 }
 
+.nickname-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.nickname-modal.hidden {
+  display: none;
+}
+
+.nickname-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.nickname-modal-content {
+  position: relative;
+  background: var(--card);
+  border-radius: 24px;
+  padding: 32px 28px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+}
+
+.nickname-modal-title {
+  margin: 0 0 8px;
+  font-size: 1.5rem;
+  color: #1f4f9d;
+}
+
+.nickname-modal-subtitle {
+  margin: 0 0 20px;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.nickname-modal-content input {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid #c9dcf4;
+  padding: 12px 14px;
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+
+.nickname-modal-content button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 14px;
+  border: none;
+  background: linear-gradient(180deg, #4e92f5, #3779da);
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .tutorial-modal {
   background: var(--card);
   border-radius: 24px;
