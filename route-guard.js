@@ -3,28 +3,24 @@
   if (window.__routeGuardExecuted) return;
   window.__routeGuardExecuted = true;
 
-  // 防止无限跳转的标记
-  const REDIRECT_KEY = "_edu_redirecting";
-  const REDIRECT_TIMEOUT = 3000; // 3秒内不重复跳转
+  // 防止无限跳转的标记（使用内存变量而非 sessionStorage，避免 Tracking Prevention 问题）
+  let lastRedirectTime = 0;
+  const REDIRECT_TIMEOUT = 2000; // 2秒内不重复跳转
 
-  function isRedirecting() {
-    const lastRedirect = sessionStorage.getItem(REDIRECT_KEY);
-    if (!lastRedirect) return false;
-    const elapsed = Date.now() - parseInt(lastRedirect, 10);
-    return elapsed < REDIRECT_TIMEOUT;
+  function canRedirect() {
+    const now = Date.now();
+    const elapsed = now - lastRedirectTime;
+    return elapsed > REDIRECT_TIMEOUT;
   }
 
   function markRedirecting() {
-    sessionStorage.setItem(REDIRECT_KEY, Date.now().toString());
+    lastRedirectTime = Date.now();
   }
 
   document.addEventListener("DOMContentLoaded", async () => {
     const sb = window.supabaseClient;
-    if (!sb) return;
-
-    // 如果正在跳转中，不再执行
-    if (isRedirecting()) {
-      console.log("[route-guard] 跳转冷却中，跳过检查");
+    if (!sb) {
+      console.log("[route-guard] Supabase 未初始化");
       return;
     }
 
@@ -41,6 +37,12 @@
 
       const currentPage = document.body.getAttribute("data-page");
       console.log("[route-guard] 当前页面:", currentPage, "session:", !!session);
+
+      // 如果不能跳转（冷却中），跳过检查
+      if (!canRedirect()) {
+        console.log("[route-guard] 跳转冷却中，跳过检查");
+        return;
+      }
 
       // 已登录用户访问 login 页面 → 跳转到 index
       if (currentPage === "login" && session) {
@@ -66,8 +68,7 @@
         return;
       }
 
-      // 清除跳转标记（正常停留在当前页面）
-      sessionStorage.removeItem(REDIRECT_KEY);
+      console.log("[route-guard] 无需跳转，停留在当前页面");
     } catch (err) {
       console.error("[route-guard] 路由守卫异常:", err);
     }
