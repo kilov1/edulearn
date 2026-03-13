@@ -159,8 +159,18 @@
       }
 
       try {
-        // 1. 调用 supabase.auth.signUp 注册
-        const { data, error: authError } = await sb.auth.signUp({ email, password });
+        // 1. 调用 supabase.auth.signUp 注册，传入 username 到 user_metadata（Supabase 控制台可显示）
+        const { data, error: authError } = await sb.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: username,
+              display_name: username,
+              username
+            }
+          }
+        });
 
         if (authError) {
           console.error("Auth signUp error:", authError);
@@ -177,10 +187,11 @@
         const userId = data.user.id;
         console.log("User registered successfully, ID:", userId);
 
-        // 2. 往 user_info 插入 id、username、email（登录时按用户名查邮箱）
+        // 2. 往 user_info 插入 id、username、email（邮箱存小写，与 Supabase auth 一致）
+        const emailLower = email.toLowerCase();
         let insertError = null;
         for (let attempt = 0; attempt < 2; attempt++) {
-          const res = await sb.from("user_info").insert([{ id: userId, username, email }]);
+          const res = await sb.from("user_info").insert([{ id: userId, username, email: emailLower }]);
           insertError = res.error;
           if (!insertError) break;
           if (attempt === 0) await new Promise((r) => setTimeout(r, 300));
@@ -203,15 +214,15 @@
     });
   }
 
-  // 登录表单处理（仅支持用户名+密码，邮箱仅用于找回密码）
+  // 登录：支持用户名+密码，或邮箱+密码（邮箱仅用于找回密码，但也可直接登录）
   if (loginForm) {
     loginForm.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const usernameInput = loginForm.username.value.trim();
+      const input = loginForm.username.value.trim();
       const password = loginForm.password.value;
 
-      if (!usernameInput) {
-        showMessage("请输入用户名", false);
+      if (!input) {
+        showMessage("请输入用户名或邮箱", false);
         return;
       }
 
@@ -221,26 +232,32 @@
         return;
       }
 
-      // 从 user_info 按用户名查邮箱（不区分大小写）
-      const { data: userData, error: queryError } = await sb
-        .from("user_info")
-        .select("email, username")
-        .ilike("username", usernameInput)
-        .limit(1)
-        .maybeSingle();
+      let email, username;
 
-      if (queryError || !userData) {
-        showMessage("用户名不存在", false);
-        return;
+      if (isValidEmail(input)) {
+        // 输入的是邮箱，直接登录（Supabase auth 使用小写）
+        email = input.toLowerCase();
+        const { data: u } = await sb.from("user_info").select("username").ilike("email", email).limit(1).maybeSingle();
+        username = u?.username || email.split("@")[0];
+      } else {
+        // 输入的是用户名，从 user_info 查邮箱（先精确匹配，再大小写不敏感）
+        let userData = (await sb.from("user_info").select("email, username").eq("username", input).maybeSingle()).data;
+        if (!userData) {
+          userData = (await sb.from("user_info").select("email, username").ilike("username", input).limit(1).maybeSingle()).data;
+        }
+        if (!userData) {
+          showMessage("用户名不存在", false);
+          return;
+        }
+        email = (userData.email || "").toLowerCase();
+        username = userData.username;
       }
-
-      const email = userData.email;
-      const username = userData.username;
 
       const { error: authError } = await sb.auth.signInWithPassword({ email, password });
 
       if (authError) {
-        showMessage("密码错误", false);
+        console.warn("signInWithPassword error:", authError.message, "email:", email);
+        showMessage("用户名/邮箱或密码错误", false);
         return;
       }
 
