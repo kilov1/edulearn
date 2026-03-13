@@ -105,11 +105,13 @@ CREATE POLICY "允许更新自己的 user_info" ON public.user_info FOR UPDATE U
 
 ---
 
-## 五、配置忘记密码重定向
+## 五、配置邮箱找回密码重定向
 
 1. **Authentication** → **URL Configuration**
 2. **Site URL**：`http://localhost:3000`（或你的实际地址）
-3. **Redirect URLs** 中添加：`http://localhost:3000/reset-password.html`
+3. **Redirect URLs** 中添加：
+   - `http://localhost:3000/reset-password.html`
+   - 若有线上环境：`https://你的域名/reset-password.html`
 
 ---
 

@@ -37,9 +37,11 @@
       }
 
       try {
+        const emailLower = email.toLowerCase();
         const base = window.location.origin || "http://localhost:3000";
-        const { error } = await sb.auth.resetPasswordForEmail(email, {
-          redirectTo: base + (base.endsWith("/") ? "" : "/") + "reset-password.html"
+        const redirectUrl = base + (base.endsWith("/") ? "" : "/") + "reset-password.html";
+        const { error } = await sb.auth.resetPasswordForEmail(emailLower, {
+          redirectTo: redirectUrl
         });
 
         if (error) {
