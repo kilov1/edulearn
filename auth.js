@@ -177,21 +177,19 @@
         const userId = data.user.id;
         console.log("User registered successfully, ID:", userId);
 
-        // 2. 往 user_info 插入 id、username、email
-        const { error: insertError } = await sb.from("user_info").insert([
-          {
-            id: userId,
-            username,
-            email
-          }
-        ]);
-
+        // 2. 往 user_info 插入 id、username、email（登录时按用户名查邮箱）
+        let insertError = null;
+        for (let attempt = 0; attempt < 2; attempt++) {
+          const res = await sb.from("user_info").insert([{ id: userId, username, email }]);
+          insertError = res.error;
+          if (!insertError) break;
+          if (attempt === 0) await new Promise((r) => setTimeout(r, 300));
+        }
         if (insertError) {
           console.error("Insert user_info error:", insertError);
-          // 插入失败也继续跳转，不弹错误
+          showMessage("注册成功但保存用户信息失败，请刷新后重试登录", false);
+          return;
         }
-
-        console.log("User info saved successfully");
 
         // 注册成功后跳转到登录页
         showMessage("注册成功，请登录", true);
@@ -205,15 +203,15 @@
     });
   }
 
-  // 登录表单处理（支持用户名或邮箱登录）
+  // 登录表单处理（仅支持用户名+密码，邮箱仅用于找回密码）
   if (loginForm) {
     loginForm.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const input = loginForm.username.value.trim();
+      const usernameInput = loginForm.username.value.trim();
       const password = loginForm.password.value;
 
-      if (!input) {
-        showMessage("请输入用户名或邮箱", false);
+      if (!usernameInput) {
+        showMessage("请输入用户名", false);
         return;
       }
 
@@ -223,28 +221,21 @@
         return;
       }
 
-      let email, username;
+      // 从 user_info 按用户名查邮箱（不区分大小写）
+      const { data: userData, error: queryError } = await sb
+        .from("user_info")
+        .select("email, username")
+        .ilike("username", usernameInput)
+        .limit(1)
+        .maybeSingle();
 
-      if (isValidEmail(input)) {
-        // 输入的是邮箱，直接用于登录
-        email = input;
-        const { data: u } = await sb.from("user_info").select("username").eq("email", email).single();
-        username = u?.username || input.split("@")[0];
-      } else {
-        // 输入的是用户名，从 user_info 查邮箱
-        const { data: userData, error: queryError } = await sb
-          .from("user_info")
-          .select("email, username")
-          .eq("username", input)
-          .single();
-
-        if (queryError || !userData) {
-          showMessage("用户名不存在", false);
-          return;
-        }
-        email = userData.email;
-        username = userData.username || input;
+      if (queryError || !userData) {
+        showMessage("用户名不存在", false);
+        return;
       }
+
+      const email = userData.email;
+      const username = userData.username;
 
       const { error: authError } = await sb.auth.signInWithPassword({ email, password });
 

@@ -346,7 +346,7 @@
   function updateCurrentUser(mutator) {
     const username = currentUsername();
     const users = getUsers();
-    const idx = users.findIndex((u) => u.username === username);
+    const idx = users.findIndex((u) => (u.username || "").toLowerCase() === (username || "").toLowerCase());
     if (idx < 0) return null;
     ensureUserShape(users[idx]);
     mutator(users[idx]);
@@ -389,6 +389,13 @@
     });
   }
 
+  function getDisplayName(user) {
+    if (!user) return "";
+    ensureUserShape(user);
+    const val = user.profile.nickname || user.username;
+    return (val && val.includes("@")) ? user.username : (val || "用户");
+  }
+
   function setupHeader() {
     const user = getCurrentUser();
     if (!user) return;
@@ -397,7 +404,7 @@
     const nameEl = document.getElementById("headerName");
     const logoutBtn = document.getElementById("logoutBtn");
     if (avatarEl) avatarEl.style.background = user.avatarColor;
-    if (nameEl) nameEl.textContent = user.profile.nickname || user.username;
+    if (nameEl) nameEl.textContent = getDisplayName(user);
     if (logoutBtn) {
       logoutBtn.addEventListener("click", async () => {
         const sb = window.supabaseClient;
@@ -979,7 +986,7 @@
           <div style="display:flex;align-items:center;gap:12px;">
             <div class="avatar large" style="background:${user.avatarColor}"></div>
             <div>
-              <div><strong>${user.profile.nickname || user.username}</strong></div>
+              <div><strong>${getDisplayName(user)}</strong></div>
               <div class="muted">用户名：${user.username}</div>
             </div>
           </div>
@@ -990,7 +997,7 @@
         <p>性别：${user.profile.gender || "未填写"}</p>
       `;
 
-      profileForm.nickname.value = user.profile.nickname || "";
+      profileForm.nickname.value = (user.profile.nickname && !user.profile.nickname.includes("@")) ? user.profile.nickname : (user.username || "");
       profileForm.realName.value = user.profile.realName || "";
       profileForm.school.value = user.profile.school || "";
       profileForm.birthday.value = user.profile.birthday || "";
@@ -1136,6 +1143,9 @@
       }
       localStorage.setItem(CURRENT_KEY, username);
       ensureUserInStorage(username);
+      updateCurrentUser((x) => {
+        if ((x.profile?.nickname || "").includes("@") || !x.profile?.nickname) x.profile.nickname = username;
+      });
     }
     if (!requireAuth()) return;
     wireBackButtons();
