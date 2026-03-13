@@ -1059,34 +1059,66 @@
     const msg = document.getElementById("passwordMsg");
     if (!form || !msg) return;
     const validPassword = (pwd) => /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,16}$/.test(pwd);
-    form.addEventListener("submit", (event) => {
+    form.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const user = getCurrentUser();
       const oldPassword = form.oldPassword.value;
       const newPassword = form.newPassword.value;
       const confirmPassword = form.confirmPassword.value;
-      if (oldPassword !== user.password) {
-        msg.textContent = "旧密码错误。";
-        return;
-      }
       if (!validPassword(newPassword)) {
         msg.textContent = "新密码需 8~16 位且包含字母和数字。";
+        msg.className = "hint-box error";
         return;
       }
       if (newPassword !== confirmPassword) {
         msg.textContent = "两次新密码输入不一致。";
+        msg.className = "hint-box error";
         return;
       }
-      updateCurrentUser((u) => {
-        u.password = newPassword;
-      });
-      msg.textContent = "密码修改成功。";
-      form.reset();
+      const sb = window.supabaseClient;
+      if (!sb) {
+        msg.textContent = "Supabase 未加载，请刷新页面。";
+        msg.className = "hint-box error";
+        return;
+      }
+      try {
+        const { data: { user } } = await sb.auth.getUser();
+        if (!user?.email) {
+          msg.textContent = "无法获取当前用户。";
+          msg.className = "hint-box error";
+          return;
+        }
+        const { error: reauthError } = await sb.auth.signInWithPassword({ email: user.email, password: oldPassword });
+        if (reauthError) {
+          msg.textContent = "旧密码错误。";
+          msg.className = "hint-box error";
+          return;
+        }
+        const { error: updateError } = await sb.auth.updateUser({ password: newPassword });
+        if (updateError) {
+          msg.textContent = updateError.message || "修改失败。";
+          msg.className = "hint-box error";
+          return;
+        }
+        msg.textContent = "密码修改成功。";
+        msg.className = "hint-box ok";
+        form.reset();
+      } catch (err) {
+        msg.textContent = "修改失败，请重试。";
+        msg.className = "hint-box error";
+      }
     });
   }
 
+  async function waitSupabase(maxMs) {
+    const start = Date.now();
+    while (!window.supabaseClient && (Date.now() - start) < (maxMs || 5000)) {
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    return window.supabaseClient;
+  }
+
   (async function init() {
-    const sb = window.supabaseClient;
+    const sb = await waitSupabase();
     if (sb && protectedPages.includes(page)) {
       const { data: { session } } = await sb.auth.getSession();
       if (!session) {
@@ -1094,11 +1126,16 @@
         window.location.href = "login.html";
         return;
       }
-      const username = emailToUsername(session.user?.email);
-      if (username) {
-        localStorage.setItem(CURRENT_KEY, username);
-        ensureUserInStorage(username);
+      // 从 user_info 获取 username（Supabase 使用真实邮箱，非 @edulearn.local）
+      let username = "";
+      const { data: userInfo } = await sb.from("user_info").select("username").eq("id", session.user.id).single();
+      if (userInfo?.username) {
+        username = userInfo.username;
+      } else {
+        username = session.user.email?.split("@")[0] || "user";
       }
+      localStorage.setItem(CURRENT_KEY, username);
+      ensureUserInStorage(username);
     }
     if (!requireAuth()) return;
     wireBackButtons();

@@ -866,6 +866,14 @@ main.container > section + section {
   color: var(--muted);
 }
 
+.hint-box.ok {
+  color: #0f8a54;
+}
+
+.hint-box.error {
+  color: #c02323;
+}
+
 .quiz-top {
   display: flex;
   gap: 10px;

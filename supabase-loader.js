@@ -1,41 +1,55 @@
-// Supabase 库加载器 - 支持多个 CDN 备用源
+// Supabase 加载器：先加载库，加载完成后再初始化客户端，避免 "Supabase 未加载" 错误
 (function() {
+  const SUPABASE_URL = "https://jlzneeyigkzhjmnpcsro.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_SbrJZV0ofP3NN8sKfMSxNw_ewfuaobn";
+
+  // 优先使用本地文件，避免 CDN 超时或 Tracking Prevention
   const CDN_SOURCES = [
-    'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
-    'https://unpkg.com/@supabase/supabase-js@2',
-    'https://cdn.skypack.dev/@supabase/supabase-js@2'
+    "supabase.min.js",
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js",
+    "https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.min.js",
+    "https://cdn.skypack.dev/@supabase/supabase-js@2"
   ];
 
   let currentIndex = 0;
-  let loadAttempts = 0;
-  const MAX_ATTEMPTS = CDN_SOURCES.length;
 
-  function loadSupabaseScript() {
-    if (loadAttempts >= MAX_ATTEMPTS) {
-      console.error('[Supabase Loader] 所有 CDN 源均加载失败');
+  function initClient() {
+    if (typeof supabase === "undefined") {
+      console.warn("[Supabase] 库未就绪，稍后重试");
       return;
     }
+    try {
+      window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      window.supabaseReady = true;
+      console.log("[Supabase] 客户端初始化成功");
+    } catch (e) {
+      console.error("[Supabase] 初始化失败:", e);
+    }
+  }
 
-    const script = document.createElement('script');
+  function tryLoad() {
+    const script = document.createElement("script");
     script.src = CDN_SOURCES[currentIndex];
-    
+    script.async = false;
+
     script.onload = function() {
-      console.log(`[Supabase Loader] 成功从 ${CDN_SOURCES[currentIndex]} 加载`);
+      console.log("[Supabase] 从 " + CDN_SOURCES[currentIndex] + " 加载成功");
+      initClient();
     };
 
     script.onerror = function() {
-      console.warn(`[Supabase Loader] ${CDN_SOURCES[currentIndex]} 加载失败，尝试下一个源...`);
-      loadAttempts++;
       currentIndex++;
       if (currentIndex < CDN_SOURCES.length) {
-        loadSupabaseScript();
+        tryLoad();
       } else {
-        console.error('[Supabase Loader] 所有 CDN 源均加载失败，请检查网络连接');
+        console.error("[Supabase] 所有 CDN 加载失败，请检查网络或使用本地服务器运行");
+        // 仍尝试初始化，可能 supabase 已通过其他方式加载
+        initClient();
       }
     };
 
     document.head.appendChild(script);
   }
 
-  loadSupabaseScript();
+  tryLoad();
 })();

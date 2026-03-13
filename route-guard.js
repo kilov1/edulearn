@@ -18,16 +18,20 @@
   }
 
   document.addEventListener("DOMContentLoaded", async () => {
-    const sb = window.supabaseClient;
+    let sb = window.supabaseClient;
     if (!sb) {
-      console.log("[route-guard] Supabase 未初始化");
+      for (let i = 0; i < 30; i++) {
+        await new Promise((r) => setTimeout(r, 100));
+        sb = window.supabaseClient;
+        if (sb) break;
+      }
+    }
+    if (!sb) {
+      console.log("[route-guard] Supabase 未初始化，跳过路由检查");
       return;
     }
 
     try {
-      // 延迟确保 Supabase 完全初始化
-      await new Promise(resolve => setTimeout(resolve, 300));
-
       const { data: { session }, error } = await sb.auth.getSession();
       
       if (error) {

@@ -17,8 +17,13 @@
   const avatarOptions = document.getElementById("avatarOptions");
   const avatarValue = document.getElementById("avatarValue");
 
-  function getSupabase() {
-    return window.supabaseClient || null;
+  async function getSupabase() {
+    if (window.supabaseClient) return window.supabaseClient;
+    for (let i = 0; i < 30; i++) {
+      await new Promise((r) => setTimeout(r, 100));
+      if (window.supabaseClient) return window.supabaseClient;
+    }
+    return null;
   }
 
   function isValidEmail(email) {
@@ -147,7 +152,7 @@
         return;
       }
 
-      const sb = getSupabase();
+      const sb = await getSupabase();
       if (!sb) {
         showMessage("Supabase 未加载，请刷新页面", false);
         return;
@@ -188,12 +193,11 @@
 
         console.log("User info saved successfully");
 
-        // 成功后直接跳 index.html
-        localStorage.setItem(CURRENT_KEY, username);
-        showMessage("注册成功，正在跳转首页...", true);
+        // 注册成功后跳转到登录页
+        showMessage("注册成功，请登录", true);
         setTimeout(() => {
-          window.location.href = "index.html";
-        }, 700);
+          window.location.href = "login.html";
+        }, 800);
       } catch (err) {
         console.error("Registration error:", err);
         showMessage("注册失败，请重试", false);
@@ -201,41 +205,48 @@
     });
   }
 
-  // 登录表单处理
+  // 登录表单处理（支持用户名或邮箱登录）
   if (loginForm) {
     loginForm.addEventListener("submit", async (event) => {
       event.preventDefault();
-      const username = loginForm.username.value.trim();
+      const input = loginForm.username.value.trim();
       const password = loginForm.password.value;
 
-      if (!username) {
-        showMessage("请输入用户名", false);
+      if (!input) {
+        showMessage("请输入用户名或邮箱", false);
         return;
       }
 
-      const sb = getSupabase();
+      const sb = await getSupabase();
       if (!sb) {
         showMessage("Supabase 未加载，请刷新页面", false);
         return;
       }
 
-      // 1. 从 user_info 表查询用户，获取邮箱
-      const { data: userData, error: queryError } = await sb
-        .from("user_info")
-        .select("email")
-        .eq("username", username)
-        .single();
+      let email, username;
 
-      if (queryError || !userData) {
-        showMessage("用户名不存在", false);
-        return;
+      if (isValidEmail(input)) {
+        // 输入的是邮箱，直接用于登录
+        email = input;
+        const { data: u } = await sb.from("user_info").select("username").eq("email", email).single();
+        username = u?.username || input.split("@")[0];
+      } else {
+        // 输入的是用户名，从 user_info 查邮箱
+        const { data: userData, error: queryError } = await sb
+          .from("user_info")
+          .select("email, username")
+          .eq("username", input)
+          .single();
+
+        if (queryError || !userData) {
+          showMessage("用户名不存在", false);
+          return;
+        }
+        email = userData.email;
+        username = userData.username || input;
       }
 
-      // 2. 用邮箱和密码登录 Supabase Auth
-      const { data: authData, error: authError } = await sb.auth.signInWithPassword({
-        email: userData.email,
-        password
-      });
+      const { error: authError } = await sb.auth.signInWithPassword({ email, password });
 
       if (authError) {
         showMessage("密码错误", false);
@@ -243,9 +254,9 @@
       }
 
       localStorage.setItem(CURRENT_KEY, username);
-      showMessage("登录成功，正在跳转首页...", true);
+      showMessage("登录成功，正在跳转...", true);
       setTimeout(() => {
-        window.location.href = "index.html";
+        window.location.replace("index.html");
       }, 400);
     });
   }
